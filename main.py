@@ -257,7 +257,7 @@ async def interp(data:InterpreterData):
                         output.append((args[0].content))  # Output the value of the argument (symbol or literal)
                         stack.append(None)
                     elif op == "set":
-                        if size != 2 or args[0] in symbols:
+                        if size != 2 or not isinstance(args[0], str):
                             return error(i)
                         
                         stack.append(None)
@@ -325,7 +325,8 @@ async def interp(data:InterpreterData):
                     elif op == "divide":
                         if size != 2 or not checkType(args[0], int) or not checkType(args[1], int) or args[1] == 0 :
                             return error(i)
-                        stack.append((args[0]) / (args[1]))
+                        rounded_result = round(result, 4)
+                        stack.append(rounded_result)
                     elif op == "abs":
                         if size != 1 or not checkType(args[0], int):
                             return error(i)
