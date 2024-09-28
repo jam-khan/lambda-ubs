@@ -27,6 +27,10 @@ class BugFixerRequest1(BaseModel):
 class InterpreterData(BaseModel):
     expressions: List[str]
 
+class DigitalColony(BaseModel):
+    generations: int
+    colony:  str
+
 @app.get("/")
 async def read_root():
     return {"Hello": "World"}
@@ -156,6 +160,38 @@ async def bug_fixer_p1(data : List[BugFixerRequest1]):
         
         res.append(cur_res[0])
     return res
+
+@app.post("/digital-colony")
+async def digital_colony(data : List[DigitalColony]):
+    res = []
+    for input in data:
+        g, c = input.generations, input.colony
+        for i in range(g):
+            pairs = deque([])
+            total = 0
+            for j in range(len(c)):
+                total += int(c[j])
+                if j == len(c)-1:
+                    continue
+                cur,nex = int(c[j]),int(c[j+1])
+                if cur == nex:
+                    pairs.append('0')
+                elif cur == 1:
+                    pairs.append(str(10- abs(cur-nex))[-1])
+                else:
+                    pairs.append(str(abs(cur-nex))[-1])
+            new_c = ""
+
+            for i in range(len(c)):
+                if i == len(c)-1:
+                    continue
+                new_c+= c[i]
+                pop = pairs.popleft()
+                new_c += pop
+            c = new_c
+        res.append(c)
+    return res
+
 
 
 @app.post("/lisp-parser")
