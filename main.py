@@ -165,35 +165,32 @@ async def bug_fixer_p1(data : List[BugFixerRequest1]):
 async def digital_colony(data : List[DigitalColony]):
     res = []
     for input in data:
-        g, c = input.generations, str(input.colony)
-        if g == 50:
-            res.append(0)
-            continue
+        g, c = input.generations, input.colony
         for i in range(g):
-            pairs = deque()
+            pairs = []
             total = 0
+        
             for j in range(len(c)):
                 total += int(c[j])
-
-            for j in range(len(c)):
                 if j == len(c)-1:
                     break
                 cur,nex = int(c[j]),int(c[j+1])
                 if cur == nex:
-                    pairs.append(str(total)[-1])
+                    pairs.append(0)
                 elif nex>cur:
-                    pairs.append(str(10- abs(cur-nex)+total)[-1])
+                    pairs.append(10- abs(cur-nex))
                 else:
-                    pairs.append(str(abs(cur-nex)+total)[-1])
+                    pairs.append(abs(cur-nex))
             new_c = ""
-
-            for k in range(len(c)):
-                new_c+= c[k]
-                if k == len(c)-1:
+            l = 0
+            for j in range(len(c)):
+                new_c+= c[j]
+                if j == len(c)-1:
                     break
-                pop = pairs.popleft()
-                new_c += pop
+                new_c += str((pairs[l]+total)%10)
+                l+=1
             c = new_c
+        
         tot = 0
         for char in c:
             tot += int(char)
@@ -621,7 +618,44 @@ async def wordle_game(data : InputData):
         return {
             "guess": final
             } 
-            
+    
+class RequestData(BaseModel):
+    dictionary: List[str]
+    mistypes: List[str]
+
+
+@app.post("/the-clumsy-programmer")
+async def clumsy(dataList: List[RequestData]):
+    res = []
+    for data in dataList:
+        cur_res = []
+        dic, mis = data.dictionary, data.mistypes
+        pre = defaultdict(set)
+        suf = defaultdict(set)
+
+        for word in dic:
+            for i in range(len(word)):
+                pre[word[:i]].add(word)
+                suf[word[i+1:]].add(word)
+        
+        for word in mis:
+            for i in range(len(word)):
+                cur_pre = word[:i]
+                cur_suf = word[i+1:]
+                if cur_pre in pre and cur_suf in suf:
+                    found = False
+                    for word in pre[cur_pre]:
+                        if word in suf[cur_suf]:
+                            cur_res.append(word)
+                            found = True
+                            break
+                    if found:
+                        break
+        res.append({"corrections": cur_res})
+
+    return res
+
+
             
             
     
