@@ -746,7 +746,7 @@ async def mail_time(data: EmailData):
             start,end = work_hours[cur[1]]
             time_difference = 0
             dt2 = convert_working(dt2, start)
-            dt2_next = (dt2 + timedelta(hours=1)).replace(hour=dt2.hour+1, minute=0, second=0, microsecond=0)
+            dt2_next = dt2.replace(hour=dt2.hour+1, minute=0, second=0, microsecond=0)
             time_difference += dt2_next.timestamp()-dt2.timestamp()
             dt2 = dt2_next
 
