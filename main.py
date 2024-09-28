@@ -754,12 +754,8 @@ async def mail_time(data: EmailData):
                 if is_working_hour(dt2, start, end):
                     time_difference += 60*60
                 dt2 += timedelta(hours=1)
-                if dt2 >=dt1:
-                    time_difference -= dt2.timestamp() - dt1.timestamp()
-                    break
-                if dt2.hour == end:
-                    end_time = dt2.replace(hour=dt2.hour, minute=0, second=0, microsecond=0)
-                    time_difference -= dt2.timestamp() - end_time.timestamp()
+        
+            time_difference -= dt2.timestamp() - dt1.timestamp()
 
             res[cur[1]] += time_difference
             count[cur[1]] += 1
