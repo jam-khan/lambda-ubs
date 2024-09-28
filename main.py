@@ -3,6 +3,7 @@ from collections import defaultdict, deque
 from fastapi import FastAPI
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
+import copy
 from functools import cache
 
 # from english_words import get_english_words_set
@@ -162,16 +163,18 @@ async def bug_fixer_p2(data:InterpreterData):
     def solve(data):
         output = []  
         codes = data.expressions
-
         symbols = {}  
         def error(line):
-            return f"ERROR at line {line + 1}"
+            return {"output" : output + [f"ERROR at line {line + 1}"]}
+        def checkType(val, desired):
+            val = symbols.get(val, val)
+            return isinstance(val, desired)
+        
         for i, line in enumerate(codes):
             index = 0
             stack = []  
 
             while index < len(line):
-
                 curr = line[index]
 
                 if curr == '(':
@@ -189,45 +192,52 @@ async def bug_fixer_p2(data:InterpreterData):
                     args = temp[1:]
                     size = len(args)
                     if op == "puts":
-                        if size != 1:
+                        if size != 1 or not checkType(args[0], str):
                             return error(i)
                         output.append(symbols.get(args[0], args[0]))  # Output the value of the argument (symbol or literal)
+                        stack.append(None)
                     elif op == "set":
-                        if size != 2:
+                        if size != 2 or args[1] in symbols:
                             return error(i)
+                        stack.append(None)
                         symbols[args[0]] = symbols.get(args[1], args[1])  # Set a variable in the 'symbols' dictionary
                     elif op == "lowercase":
-                        if size != 1:
+                        if size != 1 or not checkType(args[0], str):
                             return error(i)
                         stack.append(symbols.get(args[0], args[0]).lower())  # Convert the argument to lowercase and push to stack
                     elif op == "uppercase":
-                        if size != 1:
+                        if size != 1 or not checkType(args[0], str):
                             return error(i)
                         stack.append(symbols.get(args[0], args[0]).upper())  # Convert the argument to uppercase and push to stack
                     elif op == "concat":         
-                        if size != 2:
+                        if size != 2 or not checkType(args[0], str) or not checkType(args[1], str):
                             return error(i)
                         stack.append(symbols.get(args[0], args[0]) + symbols.get(args[1], args[1]))
                     elif op == "replace":
-                        if size != 3:
+                        if size != 3 or not checkType(args[0], str) or not checkType(args[1], str) or not checkType(args[2], str):
                             return error(i)
-                        target = symbols.get(args[0], args[0])
-                        old = symbols.get(args[1], args[1])
-                        new = symbols.get(args[2], args[2])
-                        result = target.replace(old, new)
-                        stack.append(result)  # Replace string and push the result to stack
+                        source = symbols.get(args[0], args[0])
+                        target = symbols.get(args[1], args[1])
+                        replacement = symbols.get(args[2], args[2])
+                        result = source.replace(target, replacement)
+                        print(source, target, replacement, result)
+                        stack.append(result) 
                     elif op == "substring":
-                        if size != 3:
-                            return error(i)
+                        if size != 3 or not checkType(args[0], str) or not checkType(args[1], int) or not checkType(args[2], int) or args[1] < 0 or args[2] < 0:
+                            return error(i) 
                         s = symbols.get(args[0], args[0])
                         l = symbols.get(args[1], args[1])
                         r = symbols.get(args[2], args[2])
+                        if l < 0 or r < 0 or l >= len(s) or r > len(s) or l > r:
+                            return error(i)
                         stack.append(s[l:r])
                     elif op == "add":
                         if size < 2:
                             return error(i)
                         res = 0
                         for num in args:
+                            if not checkType(num, int):
+                                return error(i)
                             res += symbols.get(num, num)
                         stack.append(res)
                     elif op == "subtract":
@@ -235,6 +245,8 @@ async def bug_fixer_p2(data:InterpreterData):
                             return error(i)
                         res = 0
                         for num in args:
+                            if not checkType(num, int):
+                                return error(i)
                             res -= symbols.get(num, num)
                         stack.append(res)
                     elif op == "multiply":
@@ -242,39 +254,49 @@ async def bug_fixer_p2(data:InterpreterData):
                             return error(i)
                         res = 1
                         for num in args:
+                            if not checkType(num, int):
+                                return error(i)
                             res *= symbols.get(num, num)
                         stack.append(res)
                     elif op == "divide":
-                        if size != 2 or args[1] == 0:
+                        if size != 2 or not checkType(args[0], int) or not checkType(args[1], int) or args[1] == 0 :
                             return error(i)
                         res = args[0]
                         for num in args[1::]:
                             res /= symbols.get(num, num)
                         stack.append(res)
                     elif op == "abs":
-                        if size != 1:
+                        if size != 1 or not checkType(args[0], int):
                             return error(i)
                         stack.append(abs(symbols.get(args[0], args[0])))
                     elif op == "max":
                         if size < 1:
                             return error(i)
                         res = args[0]
+                        if not checkType(res, int):
+                            return error(i)
                         for num in args[1::]:
+                            if not checkType(num, int):
+                                return error(i)
                             res = max(res, symbols.get(num, num))
                         stack.append(res)
                     elif op == "min":
                         if size < 1:
                             return error(i)
                         res = args[0]
+                        if not checkType(num, int):
+                                return error(i)
                         for num in args[1::]:
+                            if not checkType(num, int):
+                                return error(i)
                             res = min(res, symbols.get(num, num))
                         stack.append(res)
                     elif op == "gt":
-                        if size != 2:
+                        if size != 2 or not checkType(args[0], int) or not checkType(args[1], int):
                             return error(i)
                         stack.append(symbols.get(args[0],args[0]) > symbols.get(args[1], args[1]))
                     elif op == "lt":
-                        if size != 2:
+                        if size != 2 or not checkType(args[0], int) or not checkType(args[1], int):
                             return error(i)
                         stack.append(symbols.get(args[0],args[0]) < symbols.get(args[1], args[1]))
                     elif op == "equal":
@@ -288,7 +310,18 @@ async def bug_fixer_p2(data:InterpreterData):
                     elif op == "str":
                         if size != 1:
                             return error(i)
-                        stack.append(str(symbols.get(args[0],args[0])))
+                        res = symbols.get(args[0],args[0])
+                        if res == None:
+                            res = "null"
+                        elif isinstance(res, bool):
+                            if res:
+                                res = "true"
+                            else:
+                                res = "false"
+                        else:
+                            res = str(res)
+                        
+                        stack.append(res)
                     index += 1 
 
 
@@ -314,16 +347,159 @@ async def bug_fixer_p2(data:InterpreterData):
                                 word = float(word) if '.' in word else int(word)
                             except ValueError:
                                 pass
+                            if word == "null":
+                                word = None
                             stack.append(word)
                             continue 
                     else:
                         index += 1
 
-        return {"output" : output}
+        return {"output": output}
         
     return solve(data)
 
 
+class DodgeRequest(BaseModel):
+    data: str
+
+@app.post("/dodge")
+async def dodge(dodge_request: DodgeRequest):
+    # dodge_request = """.dd\nr*.\n...\n"""
+
+    data = dodge_request.data.strip().split('\n')
+    grid = [list(line) for line in data]
+    
+    # Idea is to dodge the bullet
+    print(grid)
+    
+    grid_tracker = copy.deepcopy(grid)
+    for i in range(len(grid_tracker)):
+        for j in range(len(grid_tracker[i])):
+            grid_tracker[i][j] = []
+    print(grid)
+    m = len(grid)
+    n = len(grid[0])
+    
+    def adjust_grid(i, j, direction):
+        
+        if direction == "u":
+            d = 0
+            while i >= 0:
+                grid_tracker[i][j] += [(d, direction)]
+                i -= 1
+                d += 1
+        elif direction == "d":
+            d = 0
+            while i < m:
+                grid_tracker[i][j] += [(d, direction)]
+                i += 1
+                d += 1
+        elif direction == "l":
+            d = 0
+            while j >= 0:
+                grid_tracker[i][j] += [(d, direction)]
+                j -= 1
+                d += 1
+        elif direction == "r":
+            d = 0
+            while j < n:
+                grid_tracker[i][j] += [(d, direction)]
+                j += 1
+                d += 1
+            
+         
+    row, col = 0, 0
+    for i in range(len(grid)):
+        for j in range(len(grid[0])):
+            
+            if grid[i][j] in ['l', 'r', 'u', 'd']:
+                adjust_grid(i, j, grid[i][j])
+            elif grid[i][j] == '*':
+                row, col = i, j
+    
+    
+    def isSafe(i, j, time):
+        
+        if not grid_tracker[i][j]:
+            return True
+        
+        
+        
+        if i == 0 and j == 0:
+            for t, di in grid_tracker[i][j]:
+                if (di == "l" or di == "u") and t <= time:
+                    return False
+        if i == m and j == 0:
+            for t, di in grid_tracker[i][j]:
+                if (di == "l" or di == "d") and t <= time:
+                    return False
+        
+        if i == 0 and j == n:
+            for t, di in grid_tracker[i][j]:
+                if (di == "r" or di == "u") and t <= time:
+                    return False
+        
+        if i == m and j == n:
+            for t, di in grid_tracker[i][j]:
+                if (di == "r" or di == "d") and t <= time:
+                    return False
+        
+        # check for stuck bullets
+        # for t, _ in grid_tracker[i][j]:
+        safe = True
+        for t, _ in grid_tracker[i][j]:
+            safe = safe and (time > t)
+        
+        return safe          
+        
+        
+    def dfs(i, j, actions, time):
+        
+        for t, _ in grid_tracker[i][j]:
+            if time == t:
+                return None
+            
+        if isSafe(i, j, time):
+            return actions
+        
+        # Go left
+        left    = None
+        right   = None 
+        up      = None
+        down    = None
+        if j - 1 >= 0 and (time + 1, "r") not in grid_tracker[i][j]:
+            temp = actions + ["l"]
+            left = dfs(i, j - 1, temp, time + 1)
+        
+        if j + 1 < n and (time + 1, "l") not in grid_tracker[i][j]:
+            temp = actions + ["r"]
+            right = dfs(i, j + 1, temp, time + 1)
+        
+        if i - 1 >= 0 and (time + 1, "d") not in grid_tracker[i][j]:
+            temp = actions + ["u"]
+            up = dfs(i - 1, j, temp, time + 1)
+        if i + 1 < m and (time + 1, "u") not in grid_tracker[i][j]:
+            temp = actions + ["d"]
+            down = dfs(i + 1, j, temp, time + 1)
+        
+        if right:
+            return right
+        
+        if left:
+            return left 
+        
+        if up:
+            return up 
+        
+        if down:
+            return down
+        
+        return None
+    print(grid_tracker)
+    # return grid_tracker
+    return dfs(row, col, [], 0)
+            
+    
 # @app.post("/wordle-game")
 # async def wordle_game(data):
     
