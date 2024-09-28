@@ -1,2 +1,1 @@
-# lambda-ubs
-This is the repository for UBS-Hackathon.
+["(set a (equal true false))", "(set b (equal true true))", "(puts (str (equal (str a) (str b))))", "(set c (concat "U58ovb3x:U`4cQylVT<H6W_Ip5:T>62Jnn5GIb;MhteK;`e0t=MAuBWiqnpbh]^eeguPeb3GKXUkGsuGkCHbwP3A:^QYG]VH42i@8v>^K9abzrkKH" "Ql7^]ssTt>mW_<Si^voWiP]:MlF:G0`JB>XN;i1pG]heG7mLqr6NC4PIusLi^ZZGQIvs;?^;JGaLSeWH_D:L@An69K_3^MG"))", "(puts (str (equal c "VuoXiqhs9=mvP3=4uAVh=JTMtffkP_ySZftTW2dS;2B4VazlUv2GaIa<>9GwY<fY1OL>IxH<[QR]q<G9bcLJxvYo`OxGAoik9RRl>sn<bgb>Xh3dM[=HlHc@=]1jrO^SV_0[")))"]
