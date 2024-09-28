@@ -713,6 +713,8 @@ async def mail_time(data: EmailData):
         # Get the last part and strip whitespace
         subject = parts[-1].strip()
         start_mail[subject].append([len(parts),email.sender, email.receiver, datetime.fromisoformat(email.timeSent)])
+    
+    print(start_mail)
 
     def is_working_hour(dt, start, end):
         if dt.weekday() >= 5:  # Saturday and Sunday are considered weekends
@@ -733,14 +735,18 @@ async def mail_time(data: EmailData):
             while dt2 < dt1:
                 if is_working_hour(dt2, start, end):
                     time_difference+=1
-                dt2 += timedelta(hours=1)
+                dt2 += timedelta(seconds=1)
 
-            res[cur[1]] += (time_difference*60*60) - (dt2.timestamp() - dt1.timestamp())
+            res[cur[1]] += (time_difference) - (dt2.timestamp() - dt1.timestamp())
             count[cur[1]] += 1
     
     for user in res:
         res[user] /= count[user]
         res[user] = round(res[user])
+    
+    for user in users:
+        if user.name not in res:
+            res[user.name] = 0
     
     return {
         "response":res
