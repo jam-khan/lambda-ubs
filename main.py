@@ -261,7 +261,11 @@ async def bug_fixer_p2(data:InterpreterData):
                         if size != 2 or not checkType(args[0], int) or not checkType(args[1], int) or args[1] == 0 :
                             return error(i)
                         res = args[0]
+                        if not checkType(res, int):
+                            return error(i)
                         for num in args[1::]:
+                            if not checkType(num, int):
+                                return error(i)
                             res /= symbols.get(num, num)
                         stack.append(res)
                     elif op == "abs":
