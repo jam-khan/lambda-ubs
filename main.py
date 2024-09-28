@@ -223,7 +223,6 @@ async def interp(data:InterpreterData):
                 desired = (int, float)
             return isinstance(val, desired)
         for i, line in enumerate(codes):
-            print(line)
             index = 0
             stack = []  
             while index < len(line):
@@ -250,14 +249,12 @@ async def interp(data:InterpreterData):
                             else:
                                 error(i)
                     if op == "puts":
-                        print(stack)
                         if size != 1 or not checkType(args[0], String):
                             return error(i)
-                        print(args[0].content)
                         output.append((args[0].content))  # Output the value of the argument (symbol or literal)
                         stack.append(None)
                     elif op == "set":
-                        if size != 2 or args[0] in symbols:
+                        if size != 2 or not isinstance(args[0], str):
                             return error(i)
                         
                         stack.append(None)
@@ -325,7 +322,9 @@ async def interp(data:InterpreterData):
                     elif op == "divide":
                         if size != 2 or not checkType(args[0], int) or not checkType(args[1], int) or args[1] == 0 :
                             return error(i)
-                        stack.append((args[0]) / (args[1]))
+                        result = args[0] / args[1]
+                        rounded_result = round(result, 4)
+                        stack.append(rounded_result)
                     elif op == "abs":
                         if size != 1 or not checkType(args[0], int):
                             return error(i)
@@ -334,7 +333,6 @@ async def interp(data:InterpreterData):
                         if size < 2:
                             return error(i)
                         res = (args[0])
-
                         if not checkType(res, int):
                             return error(i)
                         for num in args[1::]:
