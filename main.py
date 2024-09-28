@@ -161,7 +161,7 @@ async def bug_fixer_p1(data : List[BugFixerRequest1]):
         res.append(cur_res[0])
     return res
 
-@app.post("/digital_colony")
+@app.post("/digital-colony")
 async def digital_colony(data : List[DigitalColony]):
     res = []
     for input in data:
