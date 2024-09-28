@@ -204,213 +204,119 @@ async def digital_colony(dataList : List[DigitalColony]):
 
                 
 @app.post("/lisp-parser")
-async def bug_fixer_p2(data:InterpreterData):
+async def interp(data: InterpreterData):
+    class String:
+        def __init__(self, content):
+            self.content = content
+
     def solve(data):
-        output = []  
+        output = []
         codes = data.expressions
-        symbols = {}  
+        symbols = {}
+
         def error(line):
-            return {"output" : output + [f"ERROR at line {line + 1}"]}
-        def checkType(val, desired):
-            val = symbols.get(val, val)
-            if desired == int:
-                desired = (int, float)
-            return isinstance(val, desired)
-        
+            return {"output": output + [f"ERROR at line {line + 1}"]}
+
+        def get_value(val):
+            """Helper function to retrieve the value from symbols or return the value itself."""
+            return symbols.get(val, val)
+
+        def check_type(val, desired_type):
+            val = get_value(val)
+            if desired_type == int:
+                desired_type = (int, float)  # Allow float when int is expected
+            return isinstance(val, desired_type)
+
+        # Operations dictionary to map operator to corresponding function
+        operations = {
+            "puts": lambda args: output.append(get_value(args[0]).content if isinstance(get_value(args[0]), String) else get_value(args[0])),
+            "set": lambda args: symbols.update({args[0]: get_value(args[1])}),
+            "lowercase": lambda args: String(get_value(args[0]).content.lower()),
+            "uppercase": lambda args: String(get_value(args[0]).content.upper()),
+            "concat": lambda args: String(get_value(args[0]).content + get_value(args[1]).content),
+            "replace": lambda args: String(get_value(args[0]).content.replace(get_value(args[1]).content, get_value(args[2]).content)),
+            "substring": lambda args: String(get_value(args[0]).content[get_value(args[1]):get_value(args[2])]),
+            "add": lambda args: sum([get_value(arg) for arg in args]),
+            "subtract": lambda args: get_value(args[0]) - sum([get_value(arg) for arg in args[1:]]),
+            "multiply": lambda args: eval('*'.join([str(get_value(arg)) for arg in args])),
+            "divide": lambda args: get_value(args[0]) / get_value(args[1]),
+            "abs": lambda args: abs(get_value(args[0])),
+            "max": lambda args: max([get_value(arg) for arg in args]),
+            "min": lambda args: min([get_value(arg) for arg in args]),
+            "gt": lambda args: get_value(args[0]) > get_value(args[1]),
+            "lt": lambda args: get_value(args[0]) < get_value(args[1]),
+            "equal": lambda args: get_value(args[0]) == get_value(args[1]),
+            "not_equal": lambda args: get_value(args[0]) != get_value(args[1]),
+            "str": lambda args: String(str(get_value(args[0])))
+        }
+
         for i, line in enumerate(codes):
             index = 0
-            stack = []  
-            print(codes)
+            stack = []
+
             while index < len(line):
                 curr = line[index]
 
                 if curr == '(':
                     stack.append('(')
-                    index += 1 
+                    index += 1
 
                 elif curr == ')':
                     temp = []
                     while stack and stack[-1] != '(':
-                        temp.append(stack.pop(-1)) 
-                    stack.pop(-1)
+                        temp.append(stack.pop())
+                    stack.pop()
 
-                    temp = list(reversed(temp)) 
-                    op = temp[0]  
-                    args = temp[1:]
-                    size = len(args)
-                    if op == "puts":
-                        if size != 1 or not checkType(args[0], str):
-                            return error(i)
-                        output.append(symbols.get(args[0], args[0]))  # Output the value of the argument (symbol or literal)
-                        stack.append(None)
-                    elif op == "set":
-                        if size != 2 or args[0] in symbols:
-                            return error(i)
-                        
-                        stack.append(None)
+                    temp = list(reversed(temp))
+                    op = temp[0]  # The operator
+                    args = temp[1:]  # The arguments
 
-                        symbols[args[0]] = symbols.get(args[1], args[1])  # Set a variable in the 'symbols' dictionary
-                    elif op == "lowercase":
-                        if size != 1 or not checkType(args[0], str):
-                            return error(i)
-                        stack.append(symbols.get(args[0], args[0]).lower())  # Convert the argument to lowercase and push to stack
-                    elif op == "uppercase":
-                        if size != 1 or not checkType(args[0], str):
-                            return error(i)
-                        stack.append(symbols.get(args[0], args[0]).upper())  # Convert the argument to uppercase and push to stack
-                    elif op == "concat":         
-                        if size != 2 or not checkType(args[0], str) or not checkType(args[1], str):
-                            return error(i)
-                        stack.append(symbols.get(args[0], args[0]) + symbols.get(args[1], args[1]))
-                    elif op == "replace":
-                        if size != 3 or not checkType(args[0], str) or not checkType(args[1], str) or not checkType(args[2], str):
-                            return error(i)
-                        source = symbols.get(args[0], args[0])
-                        target = symbols.get(args[1], args[1])
-                        replacement = symbols.get(args[2], args[2])
-                        result = source.replace(target, replacement)
-                        stack.append(result) 
-                    elif op == "substring":
-                        if size != 3 or not checkType(args[0], str) or not checkType(args[1], int) or not checkType(args[2], int) or args[1] < 0 or args[2] < 0:
-                            return error(i) 
-                        s = symbols.get(args[0], args[0])
-                        l = symbols.get(args[1], args[1])
-                        r = symbols.get(args[2], args[2])
-                        if l < 0 or r < 0 or l >= len(s) or r > len(s) or l > r:
-                            return error(i)
-                        stack.append(s[l:r])
-                    elif op == "add":
-                        if size < 2:
-                            return error(i)
-                        res = 0
-                        for num in args:
-                            if not checkType(num, int):
+                    if op in operations:
+                        # Check the argument types based on the expected operation
+                        if op in ["puts", "lowercase", "uppercase", "concat", "replace", "substring"]:
+                            if not all(check_type(arg, String) for arg in args[:len(operations[op].__code__.co_varnames)]):
                                 return error(i)
-                            res += symbols.get(num, num)
-                        stack.append(res)
-                    elif op == "subtract":
-                        if size < 2:
-                            return error(i)
-                        res = symbols.get(args[0], args[0])
-                        if not checkType(res, int):
-                            return error(i)
-                        for num in args[1::]:
-                            if not checkType(num, int):
+                        elif op in ["add", "subtract", "multiply", "divide", "abs", "max", "min", "gt", "lt"]:
+                            if not all(check_type(arg, int) for arg in args):
                                 return error(i)
-                            res -= symbols.get(num, num)
-                        stack.append(res)
-                    elif op == "multiply":
-                        if size < 2:
-                            return error(i)
-                        
-                        res = 1
-                        for num in args:
-                            if not checkType(num, int):
-                                return error(i)
-                            res *= symbols.get(num, num)
-                        stack.append(res)
-                    elif op == "divide":
-                        if size != 2 or not checkType(args[0], int) or not checkType(args[1], int) or args[1] == 0 :
-                            return error(i)
-                        stack.append(symbols.get(args[0], args[0]) / symbols.get(args[1], args[1]))
-                    elif op == "abs":
-                        if size != 1 or not checkType(args[0], int):
-                            return error(i)
-                        stack.append(abs(symbols.get(args[0], args[0])))
-                    elif op == "max":
-                        if size < 1:
-                            return error(i)
-                        res = symbols.get(args[0], args[0])
 
-                        if not checkType(res, int):
+                        try:
+                            result = operations[op](args)
+                            stack.append(result)
+                        except (TypeError, KeyError):
                             return error(i)
-                        for num in args[1::]:
-                            if not checkType(num, int):
-                                return error(i)
-                            res = max(res, symbols.get(num, num))
-                        stack.append(res)
-                    elif op == "min":
-                        if size < 1:
-                            return error(i)
-                        res = symbols.get(args[0], args[0])
 
-                        if not checkType(res, int):
-                                return error(i)
-                        for num in args[1::]:
-                            if not checkType(num, int):
-                                return error(i)
-                            res = min(res, symbols.get(num, num))
-                        stack.append(res)
-                    elif op == "gt":
-                        if size != 2 or not checkType(args[0], int) or not checkType(args[1], int):
-                            return error(i)
-                        stack.append(symbols.get(args[0],args[0]) > symbols.get(args[1], args[1]))
-                    elif op == "lt":
-                        if size != 2 or not checkType(args[0], int) or not checkType(args[1], int):
-                            return error(i)
-                        stack.append(symbols.get(args[0],args[0]) < symbols.get(args[1], args[1]))
-                    elif op == "equal":
-                        if size != 2:
-                            return error(i)
-                        stack.append(symbols.get(args[0],args[0]) == symbols.get(args[1], args[1]))
-                    elif op == "not_equal":
-                        if size != 2:
-                            return error(i)
-                        stack.append(symbols.get(args[0],args[0]) != symbols.get(args[1], args[1]))
-                    elif op == "str":
-                        if size != 1:
-                            return error(i)
-                        res = symbols.get(args[0],args[0])
-                        if res == None:
-                            res = "null"
-                        elif isinstance(res, bool):
-                            if res:
-                                res = "true"
-                            else:
-                                res = "false"
-                        else:
-                            res = str(res)
-                        
-                        stack.append(res)
-                    index += 1 
-
-
+                    else:
+                        return error(i)  # Unsupported operation
+                    index += 1
 
                 else:
                     if curr != ' ':
-
-                        if curr == '\"':  # Handle strings
+                        if curr == '\"':  # String handling
                             word = ""
-                            index += 1  # Skip the opening quote
+                            index += 1
                             while index < len(line) and line[index] != '\"':
                                 word += line[index]
                                 index += 1
-                            stack.append(word)
-                            index += 1  # Skip the closing quote
-                        else:
+                            stack.append(String(word))
+                            index += 1
+                        else:  # Number or symbol
                             word = ""
                             while index < len(line) and line[index] not in " ()":
                                 word += line[index]
                                 index += 1
                             try:
-                                # Try to convert to a number
                                 word = float(word) if '.' in word else int(word)
                             except ValueError:
                                 pass
-                            if word == "null":
-                                word = None
-                            if word == "true":
-                                word = True
-                            if word == "false":
-                                word = False
                             stack.append(word)
-                            continue 
                     else:
                         index += 1
-        print(output)
+
         return {"output": output}
-        
+
     return solve(data)
+
 
 
 class DodgeRequest(BaseModel):
