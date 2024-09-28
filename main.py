@@ -284,7 +284,7 @@ async def bug_fixer_p2(data:InterpreterData):
                         if size < 1:
                             return error(i)
                         res = args[0]
-                        if not checkType(num, int):
+                        if not checkType(res, int):
                                 return error(i)
                         for num in args[1::]:
                             if not checkType(num, int):
