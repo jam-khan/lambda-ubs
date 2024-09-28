@@ -326,7 +326,7 @@ async def interp(data:InterpreterData):
                             return error(i)
                         stack.append(abs((args[0])))
                     elif op == "max":
-                        if size < 1:
+                        if size < 2:
                             return error(i)
                         res = (args[0])
 
@@ -338,7 +338,7 @@ async def interp(data:InterpreterData):
                             res = max(res, (num))
                         stack.append(res)
                     elif op == "min":
-                        if size < 1:
+                        if size < 2:
                             return error(i)
                         res = (args[0])
 
