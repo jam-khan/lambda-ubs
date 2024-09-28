@@ -62,6 +62,7 @@ async def klotski(move_requests: List[MoveRequest]):
         res_total.append("".join(res))
 
     return res_total    
+
 @app.post("/efficient-hunter-kazuma")
 async def efficient_hunter_kazuma(data: List[MonsterData]):
     def calculate_efficiency(monsters):
