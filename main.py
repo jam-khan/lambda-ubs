@@ -868,7 +868,8 @@ async def wordle(data : WordleData):
                     validated_letters['greens'][j] = letter
                 elif evalResult[j] == 'X':
                     validated_letters['yellows'].add(letter)
-                
+                elif evalResult[i] == '?':
+                    validated_letters['greens'][j] = letter
                 # else case '?' where it is masked
         
         return validated_letters
