@@ -739,7 +739,7 @@ class EmailData(BaseModel):
 async def mail_time(data: EmailData):
     emails, users = data.emails, data.users
     start_mail = defaultdict(list)
-    res = defaultdict(int)
+    res = {}
     count = defaultdict(int)
     work_hours = {}
     time_zones = {}
@@ -801,7 +801,7 @@ async def mail_time(data: EmailData):
           
             time_difference -= dt2.timestamp() - dt1.timestamp()
 
-            res[cur[1]] += time_difference
+            res[cur[1]] = res.get(cur[1], 0) + time_difference
             count[cur[1]] += 1
     
     for user in res:
