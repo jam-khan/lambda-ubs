@@ -287,12 +287,13 @@ async def bug_fixer_p2(data:InterpreterData):
                     elif op == "subtract":
                         if size < 2:
                             return error(i)
-                        res = args[0]
+                        res = symbols.get(args[0], args[0])
                         if not checkType(res, int):
                             return error(i)
                         for num in args[1::]:
                             if not checkType(num, int):
                                 return error(i)
+                            print(res, symbols.get(num, num), symbols)
                             res -= symbols.get(num, num)
                         stack.append(res)
                     elif op == "multiply":
@@ -316,7 +317,8 @@ async def bug_fixer_p2(data:InterpreterData):
                     elif op == "max":
                         if size < 1:
                             return error(i)
-                        res = args[0]
+                        res = symbols.get(args[0], args[0])
+
                         if not checkType(res, int):
                             return error(i)
                         for num in args[1::]:
@@ -327,7 +329,8 @@ async def bug_fixer_p2(data:InterpreterData):
                     elif op == "min":
                         if size < 1:
                             return error(i)
-                        res = args[0]
+                        res = symbols.get(args[0], args[0])
+
                         if not checkType(res, int):
                                 return error(i)
                         for num in args[1::]:
@@ -346,7 +349,6 @@ async def bug_fixer_p2(data:InterpreterData):
                     elif op == "equal":
                         if size != 2:
                             return error(i)
-                        print(args[0] == args[1])
                         stack.append(symbols.get(args[0],args[0]) == symbols.get(args[1], args[1]))
                     elif op == "not_equal":
                         if size != 2:

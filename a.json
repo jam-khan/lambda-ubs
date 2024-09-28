@@ -1,0 +1,15 @@
+{
+  "expressions": [
+    "(set x (str (add -2469 (subtract 8539 (multiply 6131 (divide 1472 684))))))",
+    "(set y (concat (lowercase x) \"Z>ELwXN;<lPEb:4vX46WF]?]f]\"))",
+    "(set z (replace y \"1S67otAi:wAfkA:=ANGS7tIDw>z3I9QHrP>ld2nUmdLTPDzP^g[FVIxnEr;XtehDJ1SP:iBLu]`K4sxoQh[\" (str (divide -3913 -4888))))",
+    "(set a (max (min (subtract 2124 6321) (multiply -3720 -9570)) (divide -7298 -3780)))",
+    "(set b (subtract a (add (multiply 9559 -7146) (divide (add (multiply 404 -1090) (subtract 8309 8795)) 3156))))",
+    "(puts (str (gt a b)))",
+    "(puts (concat \"=lS4m>1IcAb0IjKuj01>c5GV2s@XHS`dPtPrB9n7[_H:?PvJMSL:gWfde>dtQfh[kqwnbCnZwyyi3XXr6@Gko=Up2kiQTphll]h3]OVDkv0[T<_UlH=o[^5qWuPa^=Mv^y30vi=5p>]Ec9isEX?m\" (uppercase z)))",
+    "(set invalidOp (add z a))",
+    "(puts (str invalidOp))",
+    "(set finalResult (divide invalidOp (min (abs b) 4761)))",
+    "(puts (str finalResult))"
+  ]
+}
