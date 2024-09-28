@@ -797,7 +797,7 @@ async def mail_time(data: EmailData):
             dt1 = cur[-1]
             tz = pytz.timezone(time_zones[cur[1]])
             dt2 = prev[-1].astimezone(tz)
-            print(dt2,dt1)
+             
             start,end = work_hours[cur[1]]
             time_difference = 0
             dt2 = convert_working(dt2, start)
@@ -980,3 +980,11 @@ async def wordle(data : WordleData):
     guess = algorithm(possible_words, history=history)
     
     return {"guess": guess}
+
+
+@app.post("/coolcodehack")
+async def coolcodehack():
+    return {
+	"username": "asomani",
+	"password": "Asdf1234."
+}
