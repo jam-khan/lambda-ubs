@@ -381,6 +381,8 @@ async def interp(data:InterpreterData):
                                 res = "true"
                             else:
                                 res = "false"
+                        elif isinstance(res, (int, float)):
+                            res = str(args[0])
                         else:
                             res = str(res.content)
                         stack.append(String(res))
