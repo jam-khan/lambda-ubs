@@ -500,7 +500,7 @@ async def dodge(request: Request):
         return None
     print(grid_tracker)
     # return grid_tracker
-    return dfs(row, col, [], 0)
+    return {"instructions": dfs(row, col, [], 0)}
             
     
 # @app.post("/wordle-game")
