@@ -640,18 +640,15 @@ def find_correct_word(mistyped_word: str, dictionary: List[str]) -> str:
     return None
 
 @app.post("/the-clumsy-programmer")
-async def correct_mistypes(data: List[RequestData]):
-    data = data[0]
-    print(data)
-    corrections = []
-    
-    dictionary = data.dictionary
-    for mistyped in data.mistypes:
-        corrected = find_correct_word(mistyped, dictionary)
-        corrections.append(corrected)
-    
-    return [ 
-            {
-                "corrections": corrections
-            }
-            ]
+async def correct_mistypes(dataList: List[RequestData]):
+    response = []
+    for data in dataList:
+        corrections = []
+        
+        dictionary = data.dictionary
+        for mistyped in data.mistypes:
+            corrected = find_correct_word(mistyped, dictionary)
+            corrections.append(corrected)
+
+        response.append({ "corrections": corrected })
+    return response
