@@ -585,15 +585,15 @@ async def wordle_game(data : InputData):
             prev_guess  = guessHistory[i]
             prev_eval   = evaluationHistory[i]
             
-            for i in range(len(prev_eval)):
-                if prev_eval[i] == 'X':
-                    possible_letters.append(prev_guess[i])
-                elif prev_eval[i] == 'O':
-                    guess[i] = prev_guess[i]
+            for j in range(len(prev_eval)):
+                if prev_eval[j] == 'X':
+                    possible_letters.append(prev_guess[j])
+                elif prev_eval[j] == 'O':
+                    guess[j] = prev_guess[j]
                     # possible_letters.append(prev_guess[i])
-                elif prev_eval[i] == '-':
-                    banned_letters.append(prev_guess[i])
-                elif prev_eval[i] == '?':
+                elif prev_eval[j] == '-':
+                    banned_letters.append(prev_guess[j])
+                elif prev_eval[j] == '?':
                     continue
         
         possible_guess = []
@@ -611,8 +611,10 @@ async def wordle_game(data : InputData):
                 put_word = put_word and not (guess[i] != '' and guess[i] != word[i])
             
             if put_word:
-                possible_guess.add(word)
+                possible_guess.append(word)
         
+        
+        print(possible_guess)
         final = possible_guess[0]
         
         return {
@@ -659,11 +661,25 @@ async def clumsy(dataList: List[RequestData]):
             
             
     
-    
-    # curr_letters = 
+def find_correct_word(mistyped_word: str, dictionary: List[str]) -> str:
+    for correct_word in dictionary:
+        if len(correct_word) == len(mistyped_word):
+            # Count differences
+            differences = sum(1 for a, b in zip(correct_word, mistyped_word) if a != b)
+            if differences == 1:
+                return correct_word
+    return None
 
+@app.post("/the-clumsy-programmer")
+async def correct_mistypes(dataList: List[RequestData]):
+    response = []
+    for data in dataList:
+        corrections = []
+        
+        dictionary = data.dictionary
+        for mistyped in data.mistypes:
+            corrected = find_correct_word(mistyped, dictionary)
+            corrections.append(corrected)
 
-
-
-
-
+        response.append({ "corrections": corrected })
+    return response
