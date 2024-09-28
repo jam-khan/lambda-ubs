@@ -282,9 +282,10 @@ async def bug_fixer_p2(data:InterpreterData):
                     elif op == "subtract":
                         if size < 2:
                             return error(i)
-                        res = 0
-                        for num in args:
-
+                        res = args[0]
+                        if not checkType(res, int):
+                            return error(i)
+                        for num in args[1::]:
                             if not checkType(num, int):
                                 return error(i)
                             res -= symbols.get(num, num)
@@ -340,6 +341,7 @@ async def bug_fixer_p2(data:InterpreterData):
                     elif op == "equal":
                         if size != 2:
                             return error(i)
+                        print(args[0] == args[1])
                         stack.append(symbols.get(args[0],args[0]) == symbols.get(args[1], args[1]))
                     elif op == "not_equal":
                         if size != 2:
@@ -387,6 +389,10 @@ async def bug_fixer_p2(data:InterpreterData):
                                 pass
                             if word == "null":
                                 word = None
+                            if word == "true":
+                                word = True
+                            if word == "false":
+                                word = False
                             stack.append(word)
                             continue 
                     else:
