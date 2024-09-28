@@ -887,7 +887,7 @@ async def wordle(data : WordleData):
 
 
     def algorithm(possible_words, history=None):
-        guess = random.choice()
+        guess = random.choice(possible_words)
 
         if not history["evaluationHistory"]:
             return guess
