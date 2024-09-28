@@ -717,6 +717,19 @@ async def mail_time(data: EmailData):
         subject = parts[-1].strip()
         start_mail[subject].append([len(parts),email.sender, email.receiver, datetime.fromisoformat(email.timeSent)])
     
+    def convert_working(dt, start):
+        while not (start <= dt.hour < end):
+            dt += timedelta(hours=1)
+        dt = dt.replace(hour=start, minute=0, second=0, microsecond=0)
+
+        if dt.weekday() >= 5:
+            days_until_monday = (7 - dt.weekday()) % 7
+            dt += timedelta(days=days_until_monday)
+            dt = dt.replace(hour=start, minute=0, second=0, microsecond=0)
+            return dt
+
+        return dt
+    
     def is_working_hour(dt, start, end):
         if dt.weekday() >= 5:  # Saturday and Sunday are considered weekends
             return False
@@ -731,23 +744,26 @@ async def mail_time(data: EmailData):
             dt1 = cur[-1]
             dt2 = prev[-1].astimezone(dt1.tzinfo)
             start,end = work_hours[cur[1]]
-            print(dt2,dt1)
-            print(start,end)
             time_difference = 0
-            first = True
+            print(dt2)
+            dt2 = convert_working(dt2, start)
+            dt2_next = (dt2 + timedelta(hours=1)).replace(hour=dt2.hour+1, minute=0, second=0, microsecond=0)
+            print(dt2, dt2_next)
+            time_difference += dt2_next.timestamp()-dt2.timestamp()
+            dt2 = dt2_next
+
             while dt2 < dt1:
                 if is_working_hour(dt2, start, end):
                     time_difference += 60*60
-                if dt2.hour == start:
-                    start_time = dt2.replace(hour=start, minute=0, second=0, microsecond=0)
-                    time_difference+= dt2.timestamp() - start_time.timestamp() if not first else 0
-                if dt2.hour == end:
-                    end_time = dt2.replace(hour=end, minute=0, second=0, microsecond=0)
-                    time_difference -= dt2.timestamp() - end_time.timestamp()
                 dt2 += timedelta(hours=1)
-                first = False
+                if dt2 >=dt1:
+                    time_difference -= dt2.timestamp() - dt1.timestamp()
+                    break
+                # if dt2.hour == end:
+                #     end_time = dt2.replace(hour=dt2.hour, minute=0, second=0, microsecond=0)
+                #     time_difference -= dt2.timestamp() - end_time.timestamp()
 
-            res[cur[1]] += (time_difference) - (dt2.timestamp() - dt1.timestamp())
+            res[cur[1]] += time_difference
             count[cur[1]] += 1
     
     for user in res:
