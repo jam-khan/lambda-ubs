@@ -297,7 +297,6 @@ async def bug_fixer_p2(data:InterpreterData):
                         for num in args[1::]:
                             if not checkType(num, int):
                                 return error(i)
-                            print(res, symbols.get(num, num), symbols)
                             res -= symbols.get(num, num)
                         stack.append(res)
                     elif op == "multiply":
@@ -408,7 +407,7 @@ async def bug_fixer_p2(data:InterpreterData):
                             continue 
                     else:
                         index += 1
-
+        print(output)
         return {"output": output}
         
     return solve(data)
