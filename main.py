@@ -245,6 +245,11 @@ async def interp(data:InterpreterData):
     class String:
         def __init__ (self, content):
             self.content = content
+    def format_number(num):
+        """Format the number to have a maximum of 4 decimal places without trailing zeros."""
+        if isinstance(num, float):
+            return float(f"{num:.4f}".rstrip('0').rstrip('.'))
+        return num
     def solve(data):
         output = []  
         codes = data.expressions
@@ -327,39 +332,42 @@ async def interp(data:InterpreterData):
                     elif op == "add":
                         if size < 2:
                             return error(i)
-                        res = 0
+                        res = 0.0  # Use float to ensure decimal results
                         for num in args:
-                            if not checkType(num, int):
+                            if not checkType(num, (int, float)):  # Check for both int and float
                                 return error(i)
-                            res += (num)
-                        stack.append(res)
+                            res += float(num)  # Convert to float to handle decimals
+                        stack.append(format_number(res))
+
                     elif op == "subtract":
                         if size < 2:
                             return error(i)
-                        res = (args[0])
-                        if not checkType(res, int):
+                        res = float(args[0])  # Start with the first argument as a float
+                        if not checkType(res, (int, float)):  # Check for both int and float
                             return error(i)
-                        for num in args[1::]:
-                            if not checkType(num, int):
+                        for num in args[1:]:
+                            if not checkType(num, (int, float)):  # Check for both int and float
                                 return error(i)
-                            res -= (num)
-                        stack.append(res)
+                            res -= float(num)  # Convert to float to handle decimals
+                        stack.append(format_number(res))
+
                     elif op == "multiply":
                         if size < 2:
                             return error(i)
                         
-                        res = 1
+                        res = 1.0  # Use float to ensure decimal results
                         for num in args:
-                            if not checkType(num, int):
+                            if not checkType(num, (int, float)):  # Check for both int and float
                                 return error(i)
-                            res *= (num)
-                        stack.append(res)
+                            res *= float(num)  # Convert to float to handle decimals
+                        stack.append(format_number(res))
+
                     elif op == "divide":
-                        if size != 2 or not checkType(args[0], int) or not checkType(args[1], int) or args[1] == 0 :
+                        if size != 2 or not checkType(args[0], (int, float)) or not checkType(args[1], (int, float)) or float(args[1]) == 0:
                             return error(i)
-                        result = args[0] / args[1]
-                        rounded_result = round(result, 4)
-                        stack.append(rounded_result)
+                        
+                        result = float(args[0]) / float(args[1])  # Ensure both arguments are treated as floats
+                        stack.append(format_number(result))
                     elif op == "abs":
                         if size != 1 or not checkType(args[0], int):
                             return error(i)
