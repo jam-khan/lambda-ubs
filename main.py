@@ -206,11 +206,15 @@ async def digital_colony(dataList : List[DigitalColony]):
 
                 
 @app.post("/lisp-parser")
-async def bug_fixer_p2(data:InterpreterData):
+async def interp(data:InterpreterData):
+    class String:
+        def __init__ (self, content):
+            self.content = content
     def solve(data):
         output = []  
         codes = data.expressions
         symbols = {}  
+        print(codes)
         def error(line):
             return {"output" : output + [f"ERROR at line {line + 1}"]}
         def checkType(val, desired):
@@ -218,11 +222,9 @@ async def bug_fixer_p2(data:InterpreterData):
             if desired == int:
                 desired = (int, float)
             return isinstance(val, desired)
-        
         for i, line in enumerate(codes):
             index = 0
             stack = []  
-            print(codes)
             while index < len(line):
                 curr = line[index]
 
@@ -240,10 +242,16 @@ async def bug_fixer_p2(data:InterpreterData):
                     op = temp[0]  
                     args = temp[1:]
                     size = len(args)
+                    for idx in range(len(args)):
+                        if isinstance(args[idx], str):
+                            if args[idx] in symbols:
+                                args[idx] = symbols[args[idx]]
+                            else:
+                                error(i)
                     if op == "puts":
-                        if size != 1 or not checkType(args[0], str):
+                        if size != 1 or not checkType(args[0], String):
                             return error(i)
-                        output.append(symbols.get(args[0], args[0]))  # Output the value of the argument (symbol or literal)
+                        output.append((args[0].content))  # Output the value of the argument (symbol or literal)
                         stack.append(None)
                     elif op == "set":
                         if size != 2 or args[0] in symbols:
@@ -251,33 +259,33 @@ async def bug_fixer_p2(data:InterpreterData):
                         
                         stack.append(None)
 
-                        symbols[args[0]] = symbols.get(args[1], args[1])  # Set a variable in the 'symbols' dictionary
+                        symbols[args[0]] = (args[1])  # Set a variable in the 'symbols' dictionary
                     elif op == "lowercase":
-                        if size != 1 or not checkType(args[0], str):
+                        if size != 1 or not checkType(args[0], String):
                             return error(i)
-                        stack.append(symbols.get(args[0], args[0]).lower())  # Convert the argument to lowercase and push to stack
+                        stack.append(String((args[0].content).lower())) # Convert the argument to lowercase and push to stack
                     elif op == "uppercase":
-                        if size != 1 or not checkType(args[0], str):
+                        if size != 1 or not checkType(args[0], String):
                             return error(i)
-                        stack.append(symbols.get(args[0], args[0]).upper())  # Convert the argument to uppercase and push to stack
+                        stack.append(String((args[0].content).upper()))  # Convert the argument to uppercase and push to stack
                     elif op == "concat":         
-                        if size != 2 or not checkType(args[0], str) or not checkType(args[1], str):
+                        if size != 2 or not checkType(args[0], String) or not checkType(args[1], String):
                             return error(i)
-                        stack.append(symbols.get(args[0], args[0]) + symbols.get(args[1], args[1]))
+                        stack.append(String((args[0].content) + (args[1].content)))
                     elif op == "replace":
-                        if size != 3 or not checkType(args[0], str) or not checkType(args[1], str) or not checkType(args[2], str):
+                        if size != 3 or not checkType(args[0], String) or not checkType(args[1], String) or not checkType(args[2], String):
                             return error(i)
-                        source = symbols.get(args[0], args[0])
-                        target = symbols.get(args[1], args[1])
-                        replacement = symbols.get(args[2], args[2])
+                        source = (args[0].content)
+                        target = (args[1].content)
+                        replacement = (args[2].content)
                         result = source.replace(target, replacement)
-                        stack.append(result) 
+                        stack.append(String(result)) 
                     elif op == "substring":
-                        if size != 3 or not checkType(args[0], str) or not checkType(args[1], int) or not checkType(args[2], int) or args[1] < 0 or args[2] < 0:
+                        if size != 3 or not checkType(args[0], String) or not checkType(args[1], int) or not checkType(args[2], int) or args[1] < 0 or args[2] < 0:
                             return error(i) 
-                        s = symbols.get(args[0], args[0])
-                        l = symbols.get(args[1], args[1])
-                        r = symbols.get(args[2], args[2])
+                        s = ((args[0]).content)
+                        l = ((args[1]))
+                        r = ((args[2]))
                         if l < 0 or r < 0 or l >= len(s) or r > len(s) or l > r:
                             return error(i)
                         stack.append(s[l:r])
@@ -288,18 +296,18 @@ async def bug_fixer_p2(data:InterpreterData):
                         for num in args:
                             if not checkType(num, int):
                                 return error(i)
-                            res += symbols.get(num, num)
+                            res += (num)
                         stack.append(res)
                     elif op == "subtract":
                         if size < 2:
                             return error(i)
-                        res = symbols.get(args[0], args[0])
+                        res = (args[0])
                         if not checkType(res, int):
                             return error(i)
                         for num in args[1::]:
                             if not checkType(num, int):
                                 return error(i)
-                            res -= symbols.get(num, num)
+                            res -= (num)
                         stack.append(res)
                     elif op == "multiply":
                         if size < 2:
@@ -309,60 +317,60 @@ async def bug_fixer_p2(data:InterpreterData):
                         for num in args:
                             if not checkType(num, int):
                                 return error(i)
-                            res *= symbols.get(num, num)
+                            res *= (num)
                         stack.append(res)
                     elif op == "divide":
                         if size != 2 or not checkType(args[0], int) or not checkType(args[1], int) or args[1] == 0 :
                             return error(i)
-                        stack.append(symbols.get(args[0], args[0]) / symbols.get(args[1], args[1]))
+                        stack.append((args[0]) / (args[1]))
                     elif op == "abs":
                         if size != 1 or not checkType(args[0], int):
                             return error(i)
-                        stack.append(abs(symbols.get(args[0], args[0])))
+                        stack.append(abs((args[0])))
                     elif op == "max":
-                        if size < 1:
+                        if size < 2:
                             return error(i)
-                        res = symbols.get(args[0], args[0])
+                        res = (args[0])
 
                         if not checkType(res, int):
                             return error(i)
                         for num in args[1::]:
                             if not checkType(num, int):
                                 return error(i)
-                            res = max(res, symbols.get(num, num))
+                            res = max(res, (num))
                         stack.append(res)
                     elif op == "min":
-                        if size < 1:
+                        if size < 2:
                             return error(i)
-                        res = symbols.get(args[0], args[0])
+                        res = (args[0])
 
                         if not checkType(res, int):
                                 return error(i)
                         for num in args[1::]:
                             if not checkType(num, int):
                                 return error(i)
-                            res = min(res, symbols.get(num, num))
+                            res = min(res, (num))
                         stack.append(res)
                     elif op == "gt":
                         if size != 2 or not checkType(args[0], int) or not checkType(args[1], int):
                             return error(i)
-                        stack.append(symbols.get(args[0],args[0]) > symbols.get(args[1], args[1]))
+                        stack.append((args[0]) > (args[1]))
                     elif op == "lt":
                         if size != 2 or not checkType(args[0], int) or not checkType(args[1], int):
                             return error(i)
-                        stack.append(symbols.get(args[0],args[0]) < symbols.get(args[1], args[1]))
+                        stack.append((args[0]) < (args[1]))
                     elif op == "equal":
                         if size != 2:
                             return error(i)
-                        stack.append(symbols.get(args[0],args[0]) == symbols.get(args[1], args[1]))
+                        stack.append((args[0]) == (args[1]))
                     elif op == "not_equal":
                         if size != 2:
                             return error(i)
-                        stack.append(symbols.get(args[0],args[0]) != symbols.get(args[1], args[1]))
+                        stack.append((args[0]) != ( args[1]))
                     elif op == "str":
                         if size != 1:
                             return error(i)
-                        res = symbols.get(args[0],args[0])
+                        res = (args[0])
                         if res == None:
                             res = "null"
                         elif isinstance(res, bool):
@@ -373,7 +381,7 @@ async def bug_fixer_p2(data:InterpreterData):
                         else:
                             res = str(res)
                         
-                        stack.append(res)
+                        stack.append(String(res))
                     index += 1 
 
 
@@ -381,13 +389,13 @@ async def bug_fixer_p2(data:InterpreterData):
                 else:
                     if curr != ' ':
 
-                        if curr == '\"':  # Handle strings
+                        if curr == '\"':  # Handle Stringings
                             word = ""
                             index += 1  # Skip the opening quote
                             while index < len(line) and line[index] != '\"':
                                 word += line[index]
                                 index += 1
-                            stack.append(word)
+                            stack.append(String(word))
                             index += 1  # Skip the closing quote
                         else:
                             word = ""
@@ -739,3 +747,28 @@ async def mail_time(data: EmailData):
         "response":res
     }
     
+            
+            
+    
+def find_correct_word(mistyped_word: str, dictionary: List[str]) -> str:
+    for correct_word in dictionary:
+        if len(correct_word) == len(mistyped_word):
+            # Count differences
+            differences = sum(1 for a, b in zip(correct_word, mistyped_word) if a != b)
+            if differences == 1:
+                return correct_word
+    return None
+
+@app.post("/the-clumsy-programmer")
+async def correct_mistypes(dataList: List[RequestData]):
+    response = []
+    for data in dataList:
+        corrections = []
+        
+        dictionary = data.dictionary
+        for mistyped in data.mistypes:
+            corrected = find_correct_word(mistyped, dictionary)
+            corrections.append(corrected)
+
+        response.append({ "corrections": corrected })
+    return response
