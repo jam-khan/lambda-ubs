@@ -758,7 +758,7 @@ class EmailData(BaseModel):
 async def mail_time(data: EmailData):
     emails, users = data.emails, data.users
     start_mail = defaultdict(list)
-    res = defaultdict(int)
+    res = {}
     count = defaultdict(int)
     work_hours = {}
     time_zones = {}
@@ -772,6 +772,8 @@ async def mail_time(data: EmailData):
         # Get the last part and strip whitespace
         subject = parts[-1].strip()
         start_mail[subject].append([len(parts),email.sender, email.receiver, datetime.fromisoformat(email.timeSent)])
+
+    print(start_mail)
     
     def convert_working(dt, start):
         if dt.weekday() >= 5:
@@ -806,6 +808,7 @@ async def mail_time(data: EmailData):
             dt1 = cur[-1]
             tz = pytz.timezone(time_zones[cur[1]])
             dt2 = prev[-1].astimezone(tz)
+            print(dt2,dt1)
             start,end = work_hours[cur[1]]
             time_difference = 0
             dt2 = convert_working(dt2, start)
@@ -820,7 +823,7 @@ async def mail_time(data: EmailData):
           
             time_difference -= dt2.timestamp() - dt1.timestamp()
 
-            res[cur[1]] += time_difference
+            res[cur[1]] = res.get(cur[1], 0) + time_difference
             count[cur[1]] += 1
     
     for user in res:
