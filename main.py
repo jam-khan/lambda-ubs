@@ -3,6 +3,7 @@ from collections import defaultdict
 from fastapi import FastAPI
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
+import copy
 # from english_words import get_english_words_set
 
 
@@ -85,6 +86,147 @@ async def efficient_hunter_kazuma(data: List[MonsterData]):
     return result
 
 
+class DodgeRequest(BaseModel):
+    data: str
+
+@app.post("/dodge")
+async def dodge(dodge_request: DodgeRequest):
+    # dodge_request = """.dd\nr*.\n...\n"""
+
+    data = dodge_request.data.strip().split('\n')
+    grid = [list(line) for line in data]
+    
+    # Idea is to dodge the bullet
+    print(grid)
+    
+    grid_tracker = copy.deepcopy(grid)
+    for i in range(len(grid_tracker)):
+        for j in range(len(grid_tracker[i])):
+            grid_tracker[i][j] = []
+    print(grid)
+    m = len(grid)
+    n = len(grid[0])
+    
+    def adjust_grid(i, j, direction):
+        
+        if direction == "u":
+            d = 0
+            while i >= 0:
+                grid_tracker[i][j] += [(d, direction)]
+                i -= 1
+                d += 1
+        elif direction == "d":
+            d = 0
+            while i < m:
+                grid_tracker[i][j] += [(d, direction)]
+                i += 1
+                d += 1
+        elif direction == "l":
+            d = 0
+            while j >= 0:
+                grid_tracker[i][j] += [(d, direction)]
+                j -= 1
+                d += 1
+        elif direction == "r":
+            d = 0
+            while j < n:
+                grid_tracker[i][j] += [(d, direction)]
+                j += 1
+                d += 1
+            
+         
+    row, col = 0, 0
+    for i in range(len(grid)):
+        for j in range(len(grid[0])):
+            
+            if grid[i][j] in ['l', 'r', 'u', 'd']:
+                adjust_grid(i, j, grid[i][j])
+            elif grid[i][j] == '*':
+                row, col = i, j
+    
+    
+    def isSafe(i, j, time):
+        
+        if not grid_tracker[i][j]:
+            return True
+        
+        
+        
+        if i == 0 and j == 0:
+            for t, di in grid_tracker[i][j]:
+                if (di == "l" or di == "u") and t <= time:
+                    return False
+        if i == m and j == 0:
+            for t, di in grid_tracker[i][j]:
+                if (di == "l" or di == "d") and t <= time:
+                    return False
+        
+        if i == 0 and j == n:
+            for t, di in grid_tracker[i][j]:
+                if (di == "r" or di == "u") and t <= time:
+                    return False
+        
+        if i == m and j == n:
+            for t, di in grid_tracker[i][j]:
+                if (di == "r" or di == "d") and t <= time:
+                    return False
+        
+        # check for stuck bullets
+        # for t, _ in grid_tracker[i][j]:
+        safe = True
+        for t, _ in grid_tracker[i][j]:
+            safe = safe and (time > t)
+        
+        return safe          
+        
+        
+    def dfs(i, j, actions, time):
+        
+        for t, _ in grid_tracker[i][j]:
+            if time == t:
+                return None
+            
+        if isSafe(i, j, time):
+            return actions
+        
+        # Go left
+        left    = None
+        right   = None 
+        up      = None
+        down    = None
+        if j - 1 >= 0 and (time + 1, "r") not in grid_tracker[i][j]:
+            temp = actions + ["l"]
+            left = dfs(i, j - 1, temp, time + 1)
+        
+        if j + 1 < n and (time + 1, "l") not in grid_tracker[i][j]:
+            temp = actions + ["r"]
+            right = dfs(i, j + 1, temp, time + 1)
+        
+        if i - 1 >= 0 and (time + 1, "d") not in grid_tracker[i][j]:
+            temp = actions + ["u"]
+            up = dfs(i - 1, j, temp, time + 1)
+        if i + 1 < m and (time + 1, "u") not in grid_tracker[i][j]:
+            temp = actions + ["d"]
+            down = dfs(i + 1, j, temp, time + 1)
+        
+        if right:
+            return right
+        
+        if left:
+            return left 
+        
+        if up:
+            return up 
+        
+        if down:
+            return down
+        
+        return None
+    print(grid_tracker)
+    # return grid_tracker
+    return dfs(row, col, [], 0)
+            
+    
 # @app.post("/wordle-game")
 # async def wordle_game(data):
     
