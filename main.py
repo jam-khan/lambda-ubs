@@ -733,6 +733,8 @@ async def mail_time(data: EmailData):
             dt1 = cur[-1]
             dt2 = prev[-1].astimezone(dt1.tzinfo)
             start,end = work_hours[cur[1]]
+            print(dt2,dt1)
+            print(start,end)
             time_difference = 0
             first = True
             while dt2 < dt1:
@@ -743,7 +745,7 @@ async def mail_time(data: EmailData):
                     time_difference+= dt2.timestamp() - start_time.timestamp() if not first else 0
                 if dt2.hour == end:
                     end_time = dt2.replace(hour=end, minute=0, second=0, microsecond=0)
-                    time_difference -= end_time.timestamp() - dt2.timestamp()
+                    time_difference -= dt2.timestamp() - end_time.timestamp()
                 dt2 += timedelta(hours=1)
                 first = False
 
