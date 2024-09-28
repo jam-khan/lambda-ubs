@@ -389,25 +389,42 @@ async def interp(data:InterpreterData):
                     elif op == "max":
                         if size < 2:
                             return error(i)
+                        isFloat = False
                         res = (args[0])
+                        if isinstance(res, float):
+                            isFloat = True
                         if not checkType(res, int):
                             return error(i)
                         for num in args[1::]:
                             if not checkType(num, int):
                                 return error(i)
+                            if isinstance(num, float):
+                                isFloat = True
                             res = max(res, (num))
+                            
+                        if isFloat:
+                            res = format_number(float(res))
+                            
                         stack.append(res)
                     elif op == "min":
                         if size < 2:
                             return error(i)
                         res = (args[0])
-
+                        isFloat = False
                         if not checkType(res, int):
-                                return error(i)
+                            return error(i)
+                        if isinstance(res, float):
+                            isFloat = True
                         for num in args[1::]:
                             if not checkType(num, int):
                                 return error(i)
+                            if isinstance(num, float):
+                                isFloat = True
                             res = min(res, (num))
+                        
+                        if isFloat:
+                            res = format_number(float(res))
+                            
                         stack.append(res)
                     elif op == "gt":
                         if size != 2 or not checkType(args[0], int) or not checkType(args[1], int):
