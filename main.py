@@ -162,16 +162,18 @@ async def bug_fixer_p2(data:InterpreterData):
     def solve(data):
         output = []  
         codes = data.expressions
-
         symbols = {}  
         def error(line):
-            return f"ERROR at line {line + 1}"
+            return {"output" : output + [f"ERROR at line {line + 1}"]}
+        def checkType(val, desired):
+            val = symbols.get(val, val)
+            return isinstance(val, desired)
+        
         for i, line in enumerate(codes):
             index = 0
             stack = []  
 
             while index < len(line):
-
                 curr = line[index]
 
                 if curr == '(':
@@ -189,45 +191,52 @@ async def bug_fixer_p2(data:InterpreterData):
                     args = temp[1:]
                     size = len(args)
                     if op == "puts":
-                        if size != 1:
+                        if size != 1 or not checkType(args[0], str):
                             return error(i)
                         output.append(symbols.get(args[0], args[0]))  # Output the value of the argument (symbol or literal)
+                        stack.append(None)
                     elif op == "set":
-                        if size != 2:
+                        if size != 2 or args[1] in symbols:
                             return error(i)
+                        stack.append(None)
                         symbols[args[0]] = symbols.get(args[1], args[1])  # Set a variable in the 'symbols' dictionary
                     elif op == "lowercase":
-                        if size != 1:
+                        if size != 1 or not checkType(args[0], str):
                             return error(i)
                         stack.append(symbols.get(args[0], args[0]).lower())  # Convert the argument to lowercase and push to stack
                     elif op == "uppercase":
-                        if size != 1:
+                        if size != 1 or not checkType(args[0], str):
                             return error(i)
                         stack.append(symbols.get(args[0], args[0]).upper())  # Convert the argument to uppercase and push to stack
                     elif op == "concat":         
-                        if size != 2:
+                        if size != 2 or not checkType(args[0], str) or not checkType(args[1], str):
                             return error(i)
                         stack.append(symbols.get(args[0], args[0]) + symbols.get(args[1], args[1]))
                     elif op == "replace":
-                        if size != 3:
+                        if size != 3 or not checkType(args[0], str) or not checkType(args[1], str) or not checkType(args[2], str):
                             return error(i)
-                        target = symbols.get(args[0], args[0])
-                        old = symbols.get(args[1], args[1])
-                        new = symbols.get(args[2], args[2])
-                        result = target.replace(old, new)
-                        stack.append(result)  # Replace string and push the result to stack
+                        source = symbols.get(args[0], args[0])
+                        target = symbols.get(args[1], args[1])
+                        replacement = symbols.get(args[2], args[2])
+                        result = source.replace(target, replacement)
+                        print(source, target, replacement, result)
+                        stack.append(result) 
                     elif op == "substring":
-                        if size != 3:
-                            return error(i)
+                        if size != 3 or not checkType(args[0], str) or not checkType(args[1], int) or not checkType(args[2], int) or args[1] < 0 or args[2] < 0:
+                            return error(i) 
                         s = symbols.get(args[0], args[0])
                         l = symbols.get(args[1], args[1])
                         r = symbols.get(args[2], args[2])
+                        if l < 0 or r < 0 or l >= len(s) or r > len(s) or l > r:
+                            return error(i)
                         stack.append(s[l:r])
                     elif op == "add":
                         if size < 2:
                             return error(i)
                         res = 0
                         for num in args:
+                            if not checkType(num, int):
+                                return error(i)
                             res += symbols.get(num, num)
                         stack.append(res)
                     elif op == "subtract":
@@ -235,6 +244,8 @@ async def bug_fixer_p2(data:InterpreterData):
                             return error(i)
                         res = 0
                         for num in args:
+                            if not checkType(num, int):
+                                return error(i)
                             res -= symbols.get(num, num)
                         stack.append(res)
                     elif op == "multiply":
@@ -242,39 +253,49 @@ async def bug_fixer_p2(data:InterpreterData):
                             return error(i)
                         res = 1
                         for num in args:
+                            if not checkType(num, int):
+                                return error(i)
                             res *= symbols.get(num, num)
                         stack.append(res)
                     elif op == "divide":
-                        if size != 2 or args[1] == 0:
+                        if size != 2 or not checkType(args[0], int) or not checkType(args[1], int) or args[1] == 0 :
                             return error(i)
                         res = args[0]
                         for num in args[1::]:
                             res /= symbols.get(num, num)
                         stack.append(res)
                     elif op == "abs":
-                        if size != 1:
+                        if size != 1 or not checkType(args[0], int):
                             return error(i)
                         stack.append(abs(symbols.get(args[0], args[0])))
                     elif op == "max":
                         if size < 1:
                             return error(i)
                         res = args[0]
+                        if not checkType(res, int):
+                            return error(i)
                         for num in args[1::]:
+                            if not checkType(num, int):
+                                return error(i)
                             res = max(res, symbols.get(num, num))
                         stack.append(res)
                     elif op == "min":
                         if size < 1:
                             return error(i)
                         res = args[0]
+                        if not checkType(num, int):
+                                return error(i)
                         for num in args[1::]:
+                            if not checkType(num, int):
+                                return error(i)
                             res = min(res, symbols.get(num, num))
                         stack.append(res)
                     elif op == "gt":
-                        if size != 2:
+                        if size != 2 or not checkType(args[0], int) or not checkType(args[1], int):
                             return error(i)
                         stack.append(symbols.get(args[0],args[0]) > symbols.get(args[1], args[1]))
                     elif op == "lt":
-                        if size != 2:
+                        if size != 2 or not checkType(args[0], int) or not checkType(args[1], int):
                             return error(i)
                         stack.append(symbols.get(args[0],args[0]) < symbols.get(args[1], args[1]))
                     elif op == "equal":
@@ -288,7 +309,18 @@ async def bug_fixer_p2(data:InterpreterData):
                     elif op == "str":
                         if size != 1:
                             return error(i)
-                        stack.append(str(symbols.get(args[0],args[0])))
+                        res = symbols.get(args[0],args[0])
+                        if res == None:
+                            res = "null"
+                        elif isinstance(res, bool):
+                            if res:
+                                res = "true"
+                            else:
+                                res = "false"
+                        else:
+                            res = str(res)
+                        
+                        stack.append(res)
                     index += 1 
 
 
@@ -314,12 +346,14 @@ async def bug_fixer_p2(data:InterpreterData):
                                 word = float(word) if '.' in word else int(word)
                             except ValueError:
                                 pass
+                            if word == "null":
+                                word = None
                             stack.append(word)
                             continue 
                     else:
                         index += 1
 
-        return {"output" : output}
+        return {"output": output}
         
     return solve(data)
 
