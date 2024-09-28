@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from typing import List, Tuple
 from collections import defaultdict, deque
 from fastapi import FastAPI
@@ -678,6 +679,80 @@ async def clumsy(dataList: List[RequestData]):
     return res
 
 
+class OfficeHours(BaseModel):
+    timeZone: str
+    start: int  # start hour (24-hour format)
+    end: int    # end hour (24-hour format)
+
+class User(BaseModel):
+    name: str
+    officeHours: OfficeHours
+
+class Email(BaseModel):
+    subject: str
+    sender: str
+    receiver: str
+    timeSent: str  # ISO 8601 format
+
+class EmailData(BaseModel):
+    emails: List[Email]
+    users: List[User]
+
+@app.post("/mailtime")
+async def mail_time(data: EmailData):
+    emails, users = data.emails, data.users
+    start_mail = defaultdict(list)
+    res = defaultdict(int)
+    count = defaultdict(int)
+    work_hours = {}
+
+    for user in users:
+        work_hours[user.name] = [user.officeHours.start, user.officeHours.end]
+
+    for email in emails:
+        parts = email.subject.split('RE:')
+        # Get the last part and strip whitespace
+        subject = parts[-1].strip()
+        start_mail[subject].append([len(parts),email.sender, email.receiver, datetime.fromisoformat(email.timeSent)])
+    
+    print(start_mail)
+
+    def is_working_hour(dt, start, end):
+        if dt.weekday() >= 5:  # Saturday and Sunday are considered weekends
+            return False
+        if start <= dt.hour < end:
+            return True
+        return False
+        
+    for subject in start_mail:
+        start_mail[subject].sort()
+        for i in range(1,len(start_mail[subject])):
+            cur, prev = start_mail[subject][i],start_mail[subject][i-1]
+            dt1 = cur[-1]
+            dt2 = prev[-1].astimezone(dt1.tzinfo)
+            start,end = work_hours[cur[1]]
+            time_difference = 0
+
+            while dt2 < dt1:
+                if is_working_hour(dt2, start, end):
+                    time_difference+=1
+                dt2 += timedelta(seconds=1)
+
+            res[cur[1]] += (time_difference) - (dt2.timestamp() - dt1.timestamp())
+            count[cur[1]] += 1
+    
+    for user in res:
+        res[user] /= count[user]
+        res[user] = round(res[user])
+    
+    for user in users:
+        if user.name not in res:
+            res[user.name] = 0
+    
+    return {
+        "response":res
+    }
+    
             
             
     
