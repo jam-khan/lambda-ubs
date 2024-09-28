@@ -325,6 +325,7 @@ async def interp(data:InterpreterData):
                     elif op == "divide":
                         if size != 2 or not checkType(args[0], int) or not checkType(args[1], int) or args[1] == 0 :
                             return error(i)
+                        result = args[0] / args[1]
                         rounded_result = round(result, 4)
                         stack.append(rounded_result)
                     elif op == "abs":
