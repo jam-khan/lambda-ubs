@@ -329,11 +329,14 @@ class DodgeRequest(BaseModel):
     data: str
 
 @app.post("/dodge")
-async def dodge(dodge_request: DodgeRequest):
+async def dodge(request: Request):
     # dodge_request = """.dd\nr*.\n...\n"""
-
-    data = dodge_request.data.strip().split('\n')
-    grid = [list(line) for line in data]
+    raw_text = await request.body()  # Get the raw body as bytes
+    decoded_text = raw_text.decode("utf-8")
+    
+    # Process the decoded text
+    data = decoded_text.strip().split('\n')  # Split the text into lines
+    grid = [list(line) for line in data]  # Convert each line into a list of characters
     
     # Idea is to dodge the bullet
     print(grid)
