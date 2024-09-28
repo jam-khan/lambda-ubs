@@ -1,0 +1,7 @@
+{
+  "expressions": [
+    "(set x (add (multiply 7976 -1127) (subtract 188 (divide 1074 7920))))",
+    "(set y (divide (add x -8500) -179))",
+    "(puts (str (multiply y (subtract 5225 (divide x -6293)))))"
+  ]
+}
