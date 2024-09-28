@@ -223,7 +223,6 @@ async def interp(data:InterpreterData):
                 desired = (int, float)
             return isinstance(val, desired)
         for i, line in enumerate(codes):
-            print(line)
             index = 0
             stack = []  
             while index < len(line):
@@ -250,10 +249,8 @@ async def interp(data:InterpreterData):
                             else:
                                 error(i)
                     if op == "puts":
-                        print(stack)
                         if size != 1 or not checkType(args[0], String):
                             return error(i)
-                        print(args[0].content)
                         output.append((args[0].content))  # Output the value of the argument (symbol or literal)
                         stack.append(None)
                     elif op == "set":
@@ -336,7 +333,6 @@ async def interp(data:InterpreterData):
                         if size < 2:
                             return error(i)
                         res = (args[0])
-
                         if not checkType(res, int):
                             return error(i)
                         for num in args[1::]:
