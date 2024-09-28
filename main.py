@@ -9,6 +9,8 @@ from fastapi.responses import JSONResponse
 from functools import cache
 
 import random
+
+import pytz
 from test_wordle import words
 from greens import greens
 import copy
@@ -173,41 +175,68 @@ async def bug_fixer_p1(data : List[BugFixerRequest1]):
 async def digital_colony(dataList : List[DigitalColony]):
     res = []
 
-    def f(n, colony_size):
-        if n == 0:
-            return colony_size
+    # def f(n, colony_size):
+    #     if n == 0:
+    #         return colony_size
     
-        return 2 * f(n - 1, colony_size) - 1
+    #     return 2 * f(n - 1, colony_size) - 1
     
     for data in dataList:
         colony, generations = data.colony,data.generations
-        dp_size = f(generations,len(colony))
-        dp = [0] * dp_size
-        total = 0
-        gap = dp_size//(len(colony)-1)
 
+        total = 0
+        pairs = []
 
         for i in range(len(colony)):
-            dp[i*gap] = int(colony[i])
             total += int(colony[i])
-
+            if i != len(colony) -1:
+                pairs.append((int(colony[i]), int(colony[i+1])))
+                
         for g in range(generations):
-            i = 0
-            gap_h = gap // 2
-            while gap != 0:
-                cur = dp[i]
-                nex = dp[i+gap]
-                if cur == nex:
-                    dp[i+gap_h] = total %10
-                elif cur < nex:
-                    dp[i+gap_h] = (total + 10 - abs(cur-nex)) %10
-                else:
-                    dp[i+gap_h] = (total + abs(cur-nex)) % 10
-                total += dp[i+gap_h]
-                i+=gap
-                gap//=2
+            new_pairs = []
+            new_add = 0
 
+            for cur,nex in pairs:
+                cur_res = None
+                if cur == nex:
+                    cur_res = total %10
+                elif cur < nex:
+                    cur_res = (total + 10 - (nex-cur)) %10
+                else:
+                    cur_res = (total + cur-nex) % 10
+                new_add += cur_res
+                new_pairs.append((cur,cur_res))
+                new_pairs.append((cur_res,nex))
+            total+=new_add
+            pairs = new_pairs
         res.append(total)
+
+        # dp_size = f(generations,len(colony))
+        # dp = [0] * dp_size
+        # total = 0
+        # gap = dp_size//(len(colony)-1)
+
+        # for i in range(len(colony)):
+        #     dp[i*gap] = int(colony[i])
+        #     total += int(colony[i])
+        
+        # gap_h = gap // 2
+        
+        # for g in range(generations):
+        #     i = 0
+        #     while gap != 0:
+        #         cur = dp[i]
+        #         nex = dp[i+gap]
+        #         if cur == nex:
+        #             dp[i+gap_h] = total %10
+        #         elif cur < nex:
+        #             dp[i+gap_h] = (total + 10 - abs(cur-nex)) %10
+        #         else:
+        #             dp[i+gap_h] = (total + abs(cur-nex)) % 10
+        #         total += dp[i+gap_h]
+        #         i+=gap
+        #         gap//=2
+
     return res
 
                 
@@ -736,6 +765,12 @@ async def mail_time(data: EmailData):
             while not (start <= dt.hour < end):
                 dt += timedelta(hours=1)
             dt = dt.replace(hour=start, minute=0, second=0, microsecond=0)
+
+        if dt.weekday() >= 5:
+            days_until_monday = (7 - dt.weekday()) % 7
+            dt += timedelta(days=days_until_monday)
+            dt = dt.replace(hour=start, minute=0, second=0, microsecond=0)
+            return dt
         return dt
     
     def is_working_hour(dt, start, end):
@@ -750,7 +785,8 @@ async def mail_time(data: EmailData):
         for i in range(1,len(start_mail[subject])):
             cur, prev = start_mail[subject][i],start_mail[subject][i-1]
             dt1 = cur[-1]
-            dt2 = prev[-1].astimezone(time_zones[cur[-1]])
+            tz = pytz.timezone(time_zones[cur[1]])
+            dt2 = prev[-1].astimezone(tz)
             start,end = work_hours[cur[1]]
             time_difference = 0
             dt2 = convert_working(dt2, start)
@@ -762,7 +798,7 @@ async def mail_time(data: EmailData):
                 if is_working_hour(dt2, start, end):
                     time_difference += 60*60
                 dt2 += timedelta(hours=1)
-        
+          
             time_difference -= dt2.timestamp() - dt1.timestamp()
 
             res[cur[1]] += time_difference
@@ -770,7 +806,7 @@ async def mail_time(data: EmailData):
     
     for user in res:
         res[user] /= count[user]
-        res[user] = round(res[user])
+        res[user] = int(res[user])
     
     for user in users:
         if user.name not in res:
