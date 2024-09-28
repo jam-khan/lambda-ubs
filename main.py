@@ -291,7 +291,7 @@ async def interp(data:InterpreterData):
                         r = ((args[2]))
                         if l < 0 or r < 0 or l >= len(s) or r > len(s) or l > r:
                             return error(i)
-                        stack.append(s[l:r])
+                        stack.append(String(s[l:r]))
                     elif op == "add":
                         if size < 2:
                             return error(i)
