@@ -718,16 +718,16 @@ async def mail_time(data: EmailData):
         start_mail[subject].append([len(parts),email.sender, email.receiver, datetime.fromisoformat(email.timeSent)])
     
     def convert_working(dt, start):
-        while not (start <= dt.hour < end):
-            dt += timedelta(hours=1)
-        dt = dt.replace(hour=start, minute=0, second=0, microsecond=0)
-
         if dt.weekday() >= 5:
             days_until_monday = (7 - dt.weekday()) % 7
             dt += timedelta(days=days_until_monday)
             dt = dt.replace(hour=start, minute=0, second=0, microsecond=0)
             return dt
-
+        
+        if not (start <= dt.hour < end):
+            while not (start <= dt.hour < end):
+                dt += timedelta(hours=1)
+            dt = dt.replace(hour=start, minute=0, second=0, microsecond=0)
         return dt
     
     def is_working_hour(dt, start, end):
