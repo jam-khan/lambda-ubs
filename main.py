@@ -275,7 +275,7 @@ async def bug_fixer_p2(data:InterpreterData):
                     else:
                         index += 1
 
-        return output
+        return {"output" : output}
         
     return solve(data)
 
