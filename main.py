@@ -1017,5 +1017,5 @@ async def wordle(data : WordleData):
 async def coolcodehack():
     return {
 	"username": "asomani",
-	"password": "Asdf1234."
+	"password": "Richie1234."
 }
