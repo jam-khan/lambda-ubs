@@ -209,7 +209,7 @@ async def bug_fixer_p2(data:InterpreterData):
         for i, line in enumerate(codes):
             index = 0
             stack = []  
-
+            print(codes)
             while index < len(line):
                 curr = line[index]
 
@@ -256,7 +256,6 @@ async def bug_fixer_p2(data:InterpreterData):
                         target = symbols.get(args[1], args[1])
                         replacement = symbols.get(args[2], args[2])
                         result = source.replace(target, replacement)
-                        print(source, target, replacement, result)
                         stack.append(result) 
                     elif op == "substring":
                         if size != 3 or not checkType(args[0], str) or not checkType(args[1], int) or not checkType(args[2], int) or args[1] < 0 or args[2] < 0:
@@ -320,7 +319,7 @@ async def bug_fixer_p2(data:InterpreterData):
                         if size < 1:
                             return error(i)
                         res = args[0]
-                        if not checkType(num, int):
+                        if not checkType(res, int):
                                 return error(i)
                         for num in args[1::]:
                             if not checkType(num, int):
@@ -399,11 +398,14 @@ class DodgeRequest(BaseModel):
     data: str
 
 @app.post("/dodge")
-async def dodge(dodge_request: DodgeRequest):
+async def dodge(request: Request):
     # dodge_request = """.dd\nr*.\n...\n"""
-
-    data = dodge_request.data.strip().split('\n')
-    grid = [list(line) for line in data]
+    raw_text = await request.body()  # Get the raw body as bytes
+    decoded_text = raw_text.decode("utf-8")
+    
+    # Process the decoded text
+    data = decoded_text.strip().split('\n')  # Split the text into lines
+    grid = [list(line) for line in data]  # Convert each line into a list of characters
     
     # Idea is to dodge the bullet
     print(grid)
@@ -533,7 +535,7 @@ async def dodge(dodge_request: DodgeRequest):
         return None
     print(grid_tracker)
     # return grid_tracker
-    return dfs(row, col, [], 0)
+    return {"instructions": dfs(row, col, [], 0)}
             
     
 # @app.post("/wordle-game")
