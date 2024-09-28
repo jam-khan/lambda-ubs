@@ -332,42 +332,56 @@ async def interp(data:InterpreterData):
                     elif op == "add":
                         if size < 2:
                             return error(i)
-                        res = 0.0  # Use float to ensure decimal results
+                        res = 0
                         for num in args:
                             if not checkType(num, (int, float)):  # Check for both int and float
                                 return error(i)
-                            res += float(num)  # Convert to float to handle decimals
-                        stack.append(format_number(res))
+                            res += num
+                        
+                        if isinstance(res, float):
+                            res = format_number(res)
+                            
+                        stack.append(res)
 
                     elif op == "subtract":
                         if size < 2:
                             return error(i)
-                        res = float(args[0])  # Start with the first argument as a float
-                        if not checkType(res, (int, float)):  # Check for both int and float
+                        res = args[0]
+                        if not checkType(res, (int, float)):
                             return error(i)
                         for num in args[1:]:
-                            if not checkType(num, (int, float)):  # Check for both int and float
+                            if not checkType(num, (int, float)):
                                 return error(i)
-                            res -= float(num)  # Convert to float to handle decimals
-                        stack.append(format_number(res))
+                            res -= (num)  # Convert to float to handle decimals
+                        
+                        if isinstance(res, float):
+                            res = format_number(res)
+                            
+                        stack.append(res)
 
                     elif op == "multiply":
                         if size < 2:
                             return error(i)
                         
-                        res = 1.0  # Use float to ensure decimal results
+                        res = 1
                         for num in args:
                             if not checkType(num, (int, float)):  # Check for both int and float
                                 return error(i)
-                            res *= float(num)  # Convert to float to handle decimals
-                        stack.append(format_number(res))
+                            res *= (num)  # Convert to float to handle decimals
+                        if isinstance(res, float):
+                            res = format_number(res)
+                        stack.append(res)
 
                     elif op == "divide":
                         if size != 2 or not checkType(args[0], (int, float)) or not checkType(args[1], (int, float)) or float(args[1]) == 0:
                             return error(i)
                         
-                        result = float(args[0]) / float(args[1])  # Ensure both arguments are treated as floats
+                        if isinstance(args[0], int) and isinstance(args[1], int):
+                            result = args[0] // args[1]
+                        else:
+                            result = (args[0]) / (args[1])  # Ensure both arguments are treated as floats
                         stack.append(format_number(result))
+                        
                     elif op == "abs":
                         if size != 1 or not checkType(args[0], int):
                             return error(i)
@@ -375,25 +389,42 @@ async def interp(data:InterpreterData):
                     elif op == "max":
                         if size < 2:
                             return error(i)
+                        isFloat = False
                         res = (args[0])
+                        if isinstance(res, float):
+                            isFloat = True
                         if not checkType(res, int):
                             return error(i)
                         for num in args[1::]:
                             if not checkType(num, int):
                                 return error(i)
+                            if isinstance(num, float):
+                                isFloat = True
                             res = max(res, (num))
+                            
+                        if isFloat:
+                            res = format_number(float(res))
+                            
                         stack.append(res)
                     elif op == "min":
                         if size < 2:
                             return error(i)
                         res = (args[0])
-
+                        isFloat = False
                         if not checkType(res, int):
-                                return error(i)
+                            return error(i)
+                        if isinstance(res, float):
+                            isFloat = True
                         for num in args[1::]:
                             if not checkType(num, int):
                                 return error(i)
+                            if isinstance(num, float):
+                                isFloat = True
                             res = min(res, (num))
+                        
+                        if isFloat:
+                            res = format_number(float(res))
+                            
                         stack.append(res)
                     elif op == "gt":
                         if size != 2 or not checkType(args[0], int) or not checkType(args[1], int):
