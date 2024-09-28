@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from collections import defaultdict
+from collections import defaultdict, deque
 from fastapi import FastAPI
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
@@ -121,6 +121,7 @@ async def bug_fixer_p2(data:List[BugFixerRequest]):
 @app.post("/bugfixer/p1")
 async def bug_fixer_p1(data : List[BugFixerRequest1]):
     res = []
+    print("hit")
     for input in data:
         time, pre = input.time, input.prerequisites
         adj_list = defaultdict(list)
@@ -136,23 +137,22 @@ async def bug_fixer_p1(data : List[BugFixerRequest1]):
         
         max_cost = {}
         cur_res = [float('-inf')]
-        
-        def dfs(n, cost):
-            if n in max_cost:
-                max_cost[n] = max(max_cost[n],cost)
-                cur_res[0] = max(cur_res[0], max_cost[n])
-                return 
 
-            max_cost[n] = cost
+        def bfs(q):
+            while q:
+                pop,cost = q.popleft()
+                max_cost[pop] = max(max_cost[pop], cost) if pop in max_cost else cost
+                cur_res[0] = max(cur_res[0], max_cost[pop])
 
-            for neigh in adj_list[n]:
-                dfs(neigh, cost+times[neigh])
-        
+                for neigh in adj_list[pop]:
+                    q.append((neigh, cost+times[neigh]))
 
+        q = deque()
         for i in range(1,len(source)):
             if source[i] == 1:
-                dfs(i, times[i])
-                cur_res[0] = max(cur_res[0], times[i])
+                q.append((i, times[i]))
+        
+        bfs(q)
         
         res.append(cur_res[0])
     return res
