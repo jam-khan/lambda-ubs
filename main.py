@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Tuple
 from collections import defaultdict, deque
 from fastapi import FastAPI
@@ -668,28 +669,56 @@ async def clumsy(dataList: List[RequestData]):
     return res
 
 
-            
-            
+class OfficeHours(BaseModel):
+    timeZone: str
+    start: int  # start hour (24-hour format)
+    end: int    # end hour (24-hour format)
+
+class User(BaseModel):
+    name: str
+    officeHours: OfficeHours
+
+class Email(BaseModel):
+    subject: str
+    sender: str
+    receiver: str
+    timeSent: datetime  # ISO 8601 format
+
+class EmailData(BaseModel):
+    emails: List[Email]
+    users: List[User]
+
+@app.post("/mailtime")
+async def mail_time(data: EmailData):
+    emails, users = data.emails, data.users
+    start_mail = defaultdict(list)
+    res = defaultdict(int)
+    count = defaultdict(int)
+
+    for email in emails:
+        parts = email.subject.split('RE:')
+        # Get the last part and strip whitespace
+        subject = parts[-1].strip()
+        start_mail[subject].append([len(parts),email.sender, email.receiver, email.timeSent])
     
-def find_correct_word(mistyped_word: str, dictionary: List[str]) -> str:
-    for correct_word in dictionary:
-        if len(correct_word) == len(mistyped_word):
-            # Count differences
-            differences = sum(1 for a, b in zip(correct_word, mistyped_word) if a != b)
-            if differences == 1:
-                return correct_word
-    return None
-
-@app.post("/the-clumsy-programmer")
-async def correct_mistypes(dataList: List[RequestData]):
-    response = []
-    for data in dataList:
-        corrections = []
-        
-        dictionary = data.dictionary
-        for mistyped in data.mistypes:
-            corrected = find_correct_word(mistyped, dictionary)
-            corrections.append(corrected)
-
-        response.append({ "corrections": corrected })
-    return response
+    print(start_mail)
+    
+    for subject in start_mail:
+        start_mail[subject].sort()
+        for i in range(1,len(start_mail[subject])):
+            cur, prev = start_mail[subject][i],start_mail[subject][i-1]
+            dt1 = cur[-1].timestamp()
+            dt2 = prev[-1].timestamp()
+            # Calculate the difference
+            time_difference = dt1 - dt2
+            res[cur[1]] += time_difference
+            count[cur[1]] += 1
+    
+    for user in res:
+        res[user] /= count[user]
+        res[user] = round(res[user])
+    
+    return {
+        "response":res
+    }
+    
