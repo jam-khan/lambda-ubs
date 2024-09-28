@@ -162,43 +162,47 @@ async def bug_fixer_p1(data : List[BugFixerRequest1]):
     return res
 
 @app.post("/digital-colony")
-async def digital_colony(data : List[DigitalColony]):
+async def digital_colony(dataList : List[DigitalColony]):
     res = []
-    for input in data:
-        g, c = input.generations, input.colony
-        for i in range(g):
-            pairs = []
-            total = 0
-        
-            for j in range(len(c)):
-                total += int(c[j])
-                if j == len(c)-1:
-                    break
-                cur,nex = int(c[j]),int(c[j+1])
+
+    def f(n, colony_size):
+        if n == 0:
+            return colony_size
+    
+        return 2 * f(n - 1, colony_size) - 1
+    
+    for data in dataList:
+        colony, generations = data.colony,data.generations
+        dp_size = f(generations,len(colony))
+        dp = [0] * dp_size
+        total = 0
+        gap = dp_size//(len(colony)-1)
+
+
+        for i in range(len(colony)):
+            dp[i*gap] = int(colony[i])
+            total += int(colony[i])
+
+        for g in range(generations):
+            i = 0
+            gap_h = gap // 2
+            while gap != 0:
+                cur = dp[i]
+                nex = dp[i+gap]
                 if cur == nex:
-                    pairs.append(0)
-                elif nex>cur:
-                    pairs.append(10- abs(cur-nex))
+                    dp[i+gap_h] = total %10
+                elif cur < nex:
+                    dp[i+gap_h] = (total + 10 - abs(cur-nex)) %10
                 else:
-                    pairs.append(abs(cur-nex))
-            new_c = ""
-            l = 0
-            for j in range(len(c)):
-                new_c+= c[j]
-                if j == len(c)-1:
-                    break
-                new_c += str((pairs[l]+total)%10)
-                l+=1
-            c = new_c
-        
-        tot = 0
-        for char in c:
-            tot += int(char)
-        res.append(tot)
+                    dp[i+gap_h] = (total + abs(cur-nex)) % 10
+                total += dp[i+gap_h]
+                i+=gap
+                gap//=2
+
+        res.append(total)
     return res
 
-
-
+                
 @app.post("/lisp-parser")
 async def bug_fixer_p2(data:InterpreterData):
     def solve(data):
