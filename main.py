@@ -650,4 +650,8 @@ async def correct_mistypes(data: List[RequestData]):
         corrected = find_correct_word(mistyped, dictionary)
         corrections.append(corrected)
     
-    return {"corrections": corrections}
+    return [ 
+            {
+                "corrections": corrections
+            }
+            ]
