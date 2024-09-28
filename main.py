@@ -761,6 +761,8 @@ async def mail_time(data: EmailData):
         # Get the last part and strip whitespace
         subject = parts[-1].strip()
         start_mail[subject].append([len(parts),email.sender, email.receiver, datetime.fromisoformat(email.timeSent)])
+
+    print(start_mail)
     
     def convert_working(dt, start):
         if dt.weekday() >= 5:
@@ -795,6 +797,7 @@ async def mail_time(data: EmailData):
             dt1 = cur[-1]
             tz = pytz.timezone(time_zones[cur[1]])
             dt2 = prev[-1].astimezone(tz)
+            print(dt2,dt1)
             start,end = work_hours[cur[1]]
             time_difference = 0
             dt2 = convert_working(dt2, start)
