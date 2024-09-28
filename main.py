@@ -732,11 +732,18 @@ async def mail_time(data: EmailData):
             dt2 = prev[-1].astimezone(dt1.tzinfo)
             start,end = work_hours[cur[1]]
             time_difference = 0
-
             while dt2 < dt1:
                 if is_working_hour(dt2, start, end):
-                    time_difference+=1
-                dt2 += timedelta(seconds=1)
+                    time_difference += 60*60
+                if dt2.hour == start:
+                    start_time = dt2.replace(hour=start, minute=0, second=0, microsecond=0)
+                    print(start_time)
+                    time_difference+= dt2.timestamp() - start_time.timestamp()
+                if dt2.hour == end:
+                    end_time = dt2.replace(hour=end, minute=0, second=0, microsecond=0)
+                    time_difference -= end_time.timestamp() - dt2.timestamp()
+                dt2 += timedelta(hours=1)
+
 
             res[cur[1]] += (time_difference) - (dt2.timestamp() - dt1.timestamp())
             count[cur[1]] += 1
