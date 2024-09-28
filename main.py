@@ -885,6 +885,28 @@ async def wordle(data : WordleData):
 
         return filtered_words
 
+    # Assuming random guess
+    def frequency(possible_words):
+        
+        guess = ['', '', '', '', '']
+        
+        for i in range(5):
+            freq = defaultdict(int)
+            letters = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]
+            
+            max_freq = 0
+            for word in possible_words:
+                freq[word[i]] += 1
+                max_freq = max(max_freq, freq[word[i]])
+            
+            for letter, f in freq:
+                if f == max_freq:
+                    guess[i] = letter
+        
+        return "".join(guess)
+                    
+            
+            
 
     def algorithm(possible_words, history=None):
         guess = random.choice(possible_words)
@@ -898,8 +920,9 @@ async def wordle(data : WordleData):
         if not possible_words:
             return guess
         
-        guess = greens(possible_words)[0]
+        guess = frequency(greens(possible_words))
         return guess
+    
     history = {}
     history["guessHistory"] = data.guessHistory
     history["evaluationHistory"] = data.evaluationHistory
