@@ -3,6 +3,8 @@ from collections import defaultdict
 from fastapi import FastAPI
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
+from functools import cache
+
 # from english_words import get_english_words_set
 
 
@@ -15,6 +17,9 @@ class MoveRequest(BaseModel):
     moves: str
 class MonsterData(BaseModel):
     monsters: List[int]
+class BugFixerRequest(BaseModel):
+    bugseq: List[List[int]]
+
 
 @app.get("/")
 async def read_root():
@@ -83,6 +88,29 @@ async def efficient_hunter_kazuma(data: List[MonsterData]):
         result.append({'efficiency': efficiency})
     
     return result
+
+@app.post("/bugfixer/p2")
+async def bug_fixer_p2(data:List[BugFixerRequest]):
+    res = []
+    for input in data:
+        input = input.bugseq
+        @cache
+        def dp(i, time):
+            if i == len(input):
+                return 0
+            diff,limit = input[i]
+
+            res = float('-inf')
+
+            if time+diff <= limit:
+                res = max(res, 1+dp(i+1, time+diff))
+            res = max(res, dp(i+1, time))
+
+            return res
+        res.append(dp(0,0))
+        
+    return res
+
 
 
 # @app.post("/wordle-game")
