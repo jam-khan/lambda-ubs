@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 from collections import defaultdict
 from fastapi import FastAPI
 from fastapi import FastAPI, Request
@@ -19,6 +19,9 @@ class MonsterData(BaseModel):
     monsters: List[int]
 class BugFixerRequest(BaseModel):
     bugseq: List[List[int]]
+class BugFixerRequest1(BaseModel):
+    time: List[int]
+    prerequisites : List[List[int]]
 
 
 @app.get("/")
@@ -110,6 +113,47 @@ async def bug_fixer_p2(data:List[BugFixerRequest]):
         res.append(dp(0,0))
         
     return res
+
+
+@app.post("/bugfixer/p1")
+async def bug_fixer_p1(data : List[BugFixerRequest1]):
+    res = []
+    for input in data:
+        time, pre = input.time, input.prerequisites
+        adj_list = defaultdict(list)
+        times = defaultdict(list)
+        source = [1]*(len(time)+1)
+
+        for i in range(len(time)):
+            times[i+1] = time[i]
+        
+        for a,b in pre:
+            adj_list[a].append(b)
+            source[b] = 0
+        
+        max_cost = {}
+        cur_res = [float('-inf')]
+        
+        def dfs(n, cost):
+            if n in max_cost:
+                max_cost[n] = max(max_cost[n],cost)
+                cur_res[0] = max(cur_res[0], max_cost[n])
+                return 
+
+            max_cost[n] = cost
+
+            for neigh in adj_list[n]:
+                dfs(neigh, cost+times[neigh])
+        
+
+        for i in range(1,len(source)):
+            if source[i] == 1:
+                dfs(i, times[i])
+                cur_res[0] = max(cur_res[0], times[i])
+        
+        res.append(cur_res[0])
+    return res
+
 
 
 
