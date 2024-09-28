@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List, Tuple
 from collections import defaultdict, deque
 from fastapi import FastAPI
@@ -205,119 +204,221 @@ async def digital_colony(dataList : List[DigitalColony]):
 
                 
 @app.post("/lisp-parser")
-async def interp(data: InterpreterData):
+async def interp(data:InterpreterData):
     class String:
-        def __init__(self, content):
+        def __init__ (self, content):
             self.content = content
-
     def solve(data):
-        output = []
+        output = []  
         codes = data.expressions
-        symbols = {}
-
+        symbols = {}  
+        print(codes)
         def error(line):
-            return {"output": output + [f"ERROR at line {line + 1}"]}
-
-        def get_value(val):
-            """Helper function to retrieve the value from symbols or return the value itself."""
-            return symbols.get(val, val)
-
-        def check_type(val, desired_type):
-            val = get_value(val)
-            if desired_type == int:
-                desired_type = (int, float)  # Allow float when int is expected
-            return isinstance(val, desired_type)
-
-        # Operations dictionary to map operator to corresponding function
-        operations = {
-            "puts": lambda args: output.append(get_value(args[0]).content if isinstance(get_value(args[0]), String) else get_value(args[0])),
-            "set": lambda args: symbols.update({args[0]: get_value(args[1])}),
-            "lowercase": lambda args: String(get_value(args[0]).content.lower()),
-            "uppercase": lambda args: String(get_value(args[0]).content.upper()),
-            "concat": lambda args: String(get_value(args[0]).content + get_value(args[1]).content),
-            "replace": lambda args: String(get_value(args[0]).content.replace(get_value(args[1]).content, get_value(args[2]).content)),
-            "substring": lambda args: String(get_value(args[0]).content[get_value(args[1]):get_value(args[2])]),
-            "add": lambda args: sum([get_value(arg) for arg in args]),
-            "subtract": lambda args: get_value(args[0]) - sum([get_value(arg) for arg in args[1:]]),
-            "multiply": lambda args: eval('*'.join([str(get_value(arg)) for arg in args])),
-            "divide": lambda args: get_value(args[0]) / get_value(args[1]),
-            "abs": lambda args: abs(get_value(args[0])),
-            "max": lambda args: max([get_value(arg) for arg in args]),
-            "min": lambda args: min([get_value(arg) for arg in args]),
-            "gt": lambda args: get_value(args[0]) > get_value(args[1]),
-            "lt": lambda args: get_value(args[0]) < get_value(args[1]),
-            "equal": lambda args: get_value(args[0]) == get_value(args[1]),
-            "not_equal": lambda args: get_value(args[0]) != get_value(args[1]),
-            "str": lambda args: String(str(get_value(args[0])))
-        }
-
+            return {"output" : output + [f"ERROR at line {line + 1}"]}
+        def checkType(val, desired):
+            val = symbols.get(val, val)
+            if desired == int:
+                desired = (int, float)
+            return isinstance(val, desired)
         for i, line in enumerate(codes):
             index = 0
-            stack = []
-
+            stack = []  
             while index < len(line):
                 curr = line[index]
 
                 if curr == '(':
                     stack.append('(')
-                    index += 1
+                    index += 1 
 
                 elif curr == ')':
                     temp = []
                     while stack and stack[-1] != '(':
-                        temp.append(stack.pop())
-                    stack.pop()
+                        temp.append(stack.pop(-1)) 
+                    stack.pop(-1)
 
-                    temp = list(reversed(temp))
-                    op = temp[0]  # The operator
-                    args = temp[1:]  # The arguments
-
-                    if op in operations:
-                        # Check the argument types based on the expected operation
-                        if op in ["puts", "lowercase", "uppercase", "concat", "replace", "substring"]:
-                            if not all(check_type(arg, String) for arg in args[:len(operations[op].__code__.co_varnames)]):
-                                return error(i)
-                        elif op in ["add", "subtract", "multiply", "divide", "abs", "max", "min", "gt", "lt"]:
-                            if not all(check_type(arg, int) for arg in args):
-                                return error(i)
-
-                        try:
-                            result = operations[op](args)
-                            stack.append(result)
-                        except (TypeError, KeyError):
+                    temp = list(reversed(temp)) 
+                    op = temp[0]  
+                    args = temp[1:]
+                    size = len(args)
+                    for idx in range(len(args)):
+                        if isinstance(args[idx], str):
+                            if args[idx] in symbols:
+                                args[idx] = symbols[args[idx]]
+                            else:
+                                error(i)
+                    if op == "puts":
+                        if size != 1 or not checkType(args[0], String):
                             return error(i)
+                        output.append((args[0].content))  # Output the value of the argument (symbol or literal)
+                        stack.append(None)
+                    elif op == "set":
+                        if size != 2 or args[0] in symbols:
+                            return error(i)
+                        
+                        stack.append(None)
 
-                    else:
-                        return error(i)  # Unsupported operation
-                    index += 1
+                        symbols[args[0]] = (args[1])  # Set a variable in the 'symbols' dictionary
+                    elif op == "lowercase":
+                        if size != 1 or not checkType(args[0], String):
+                            return error(i)
+                        stack.append(String((args[0].content).lower())) # Convert the argument to lowercase and push to stack
+                    elif op == "uppercase":
+                        if size != 1 or not checkType(args[0], String):
+                            return error(i)
+                        stack.append(String((args[0].content).upper()))  # Convert the argument to uppercase and push to stack
+                    elif op == "concat":         
+                        if size != 2 or not checkType(args[0], String) or not checkType(args[1], String):
+                            return error(i)
+                        stack.append(String((args[0].content) + (args[1].content)))
+                    elif op == "replace":
+                        if size != 3 or not checkType(args[0], String) or not checkType(args[1], String) or not checkType(args[2], String):
+                            return error(i)
+                        source = (args[0].content)
+                        target = (args[1].content)
+                        replacement = (args[2].content)
+                        result = source.replace(target, replacement)
+                        stack.append(String(result)) 
+                    elif op == "substring":
+                        if size != 3 or not checkType(args[0], String) or not checkType(args[1], int) or not checkType(args[2], int) or args[1] < 0 or args[2] < 0:
+                            return error(i) 
+                        s = (String(args[0]))
+                        l = (String(args[1]))
+                        r = (String(args[2]))
+                        if l < 0 or r < 0 or l >= len(s) or r > len(s) or l > r:
+                            return error(i)
+                        stack.append(s[l:r])
+                    elif op == "add":
+                        if size < 2:
+                            return error(i)
+                        res = 0
+                        for num in args:
+                            if not checkType(num, int):
+                                return error(i)
+                            res += (num)
+                        stack.append(res)
+                    elif op == "subtract":
+                        if size < 2:
+                            return error(i)
+                        res = (args[0])
+                        if not checkType(res, int):
+                            return error(i)
+                        for num in args[1::]:
+                            if not checkType(num, int):
+                                return error(i)
+                            res -= (num)
+                        stack.append(res)
+                    elif op == "multiply":
+                        if size < 2:
+                            return error(i)
+                        
+                        res = 1
+                        for num in args:
+                            if not checkType(num, int):
+                                return error(i)
+                            res *= (num)
+                        stack.append(res)
+                    elif op == "divide":
+                        if size != 2 or not checkType(args[0], int) or not checkType(args[1], int) or args[1] == 0 :
+                            return error(i)
+                        stack.append((args[0]) / (args[1]))
+                    elif op == "abs":
+                        if size != 1 or not checkType(args[0], int):
+                            return error(i)
+                        stack.append(abs((args[0])))
+                    elif op == "max":
+                        if size < 1:
+                            return error(i)
+                        res = (args[0])
+
+                        if not checkType(res, int):
+                            return error(i)
+                        for num in args[1::]:
+                            if not checkType(num, int):
+                                return error(i)
+                            res = max(res, (num))
+                        stack.append(res)
+                    elif op == "min":
+                        if size < 1:
+                            return error(i)
+                        res = (args[0])
+
+                        if not checkType(res, int):
+                                return error(i)
+                        for num in args[1::]:
+                            if not checkType(num, int):
+                                return error(i)
+                            res = min(res, (num))
+                        stack.append(res)
+                    elif op == "gt":
+                        if size != 2 or not checkType(args[0], int) or not checkType(args[1], int):
+                            return error(i)
+                        stack.append((args[0]) > (args[1]))
+                    elif op == "lt":
+                        if size != 2 or not checkType(args[0], int) or not checkType(args[1], int):
+                            return error(i)
+                        stack.append((args[0]) < (args[1]))
+                    elif op == "equal":
+                        if size != 2:
+                            return error(i)
+                        stack.append((args[0]) == (args[1]))
+                    elif op == "not_equal":
+                        if size != 2:
+                            return error(i)
+                        stack.append((args[0]) != ( args[1]))
+                    elif op == "str":
+                        if size != 1:
+                            return error(i)
+                        res = (args[0])
+                        if res == None:
+                            res = "null"
+                        elif isinstance(res, bool):
+                            if res:
+                                res = "true"
+                            else:
+                                res = "false"
+                        else:
+                            res = str(res)
+                        
+                        stack.append(String(res))
+                    index += 1 
+
+
 
                 else:
                     if curr != ' ':
-                        if curr == '\"':  # String handling
+
+                        if curr == '\"':  # Handle Stringings
                             word = ""
-                            index += 1
+                            index += 1  # Skip the opening quote
                             while index < len(line) and line[index] != '\"':
                                 word += line[index]
                                 index += 1
                             stack.append(String(word))
-                            index += 1
-                        else:  # Number or symbol
+                            index += 1  # Skip the closing quote
+                        else:
                             word = ""
                             while index < len(line) and line[index] not in " ()":
                                 word += line[index]
                                 index += 1
                             try:
+                                # Try to convert to a number
                                 word = float(word) if '.' in word else int(word)
                             except ValueError:
                                 pass
+                            if word == "null":
+                                word = None
+                            if word == "true":
+                                word = True
+                            if word == "false":
+                                word = False
                             stack.append(word)
+                            continue 
                     else:
                         index += 1
-
+        print(output)
         return {"output": output}
-
+        
     return solve(data)
-
 
 
 class DodgeRequest(BaseModel):
@@ -576,56 +677,28 @@ async def clumsy(dataList: List[RequestData]):
     return res
 
 
-class OfficeHours(BaseModel):
-    timeZone: str
-    start: int  # start hour (24-hour format)
-    end: int    # end hour (24-hour format)
-
-class User(BaseModel):
-    name: str
-    officeHours: OfficeHours
-
-class Email(BaseModel):
-    subject: str
-    sender: str
-    receiver: str
-    timeSent: datetime  # ISO 8601 format
-
-class EmailData(BaseModel):
-    emails: List[Email]
-    users: List[User]
-
-@app.post("/mailtime")
-async def mail_time(data: EmailData):
-    emails, users = data.emails, data.users
-    start_mail = defaultdict(list)
-    res = defaultdict(int)
-    count = defaultdict(int)
-
-    for email in emails:
-        parts = email.subject.split('RE:')
-        # Get the last part and strip whitespace
-        subject = parts[-1].strip()
-        start_mail[subject].append([len(parts),email.sender, email.receiver, email.timeSent])
+            
+            
     
-    print(start_mail)
-    
-    for subject in start_mail:
-        start_mail[subject].sort()
-        for i in range(1,len(start_mail[subject])):
-            cur, prev = start_mail[subject][i],start_mail[subject][i-1]
-            dt1 = cur[-1].timestamp()
-            dt2 = prev[-1].timestamp()
-            # Calculate the difference
-            time_difference = dt1 - dt2
-            res[cur[1]] += time_difference
-            count[cur[1]] += 1
-    
-    for user in res:
-        res[user] /= count[user]
-        res[user] = round(res[user])
-    
-    return {
-        "response":res
-    }
-    
+def find_correct_word(mistyped_word: str, dictionary: List[str]) -> str:
+    for correct_word in dictionary:
+        if len(correct_word) == len(mistyped_word):
+            # Count differences
+            differences = sum(1 for a, b in zip(correct_word, mistyped_word) if a != b)
+            if differences == 1:
+                return correct_word
+    return None
+
+@app.post("/the-clumsy-programmer")
+async def correct_mistypes(dataList: List[RequestData]):
+    response = []
+    for data in dataList:
+        corrections = []
+        
+        dictionary = data.dictionary
+        for mistyped in data.mistypes:
+            corrected = find_correct_word(mistyped, dictionary)
+            corrections.append(corrected)
+
+        response.append({ "corrections": corrected })
+    return response
