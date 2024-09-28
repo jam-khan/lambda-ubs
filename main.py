@@ -168,6 +168,8 @@ async def bug_fixer_p2(data:InterpreterData):
             return {"output" : output + [f"ERROR at line {line + 1}"]}
         def checkType(val, desired):
             val = symbols.get(val, val)
+            if desired == int:
+                desired = (int, float)
             return isinstance(val, desired)
         
         for i, line in enumerate(codes):
@@ -197,9 +199,11 @@ async def bug_fixer_p2(data:InterpreterData):
                         output.append(symbols.get(args[0], args[0]))  # Output the value of the argument (symbol or literal)
                         stack.append(None)
                     elif op == "set":
-                        if size != 2 or args[1] in symbols:
+                        if size != 2 or args[0] in symbols:
                             return error(i)
+                        
                         stack.append(None)
+
                         symbols[args[0]] = symbols.get(args[1], args[1])  # Set a variable in the 'symbols' dictionary
                     elif op == "lowercase":
                         if size != 1 or not checkType(args[0], str):
@@ -244,6 +248,7 @@ async def bug_fixer_p2(data:InterpreterData):
                             return error(i)
                         res = 0
                         for num in args:
+
                             if not checkType(num, int):
                                 return error(i)
                             res -= symbols.get(num, num)
@@ -251,6 +256,7 @@ async def bug_fixer_p2(data:InterpreterData):
                     elif op == "multiply":
                         if size < 2:
                             return error(i)
+                        
                         res = 1
                         for num in args:
                             if not checkType(num, int):
@@ -260,14 +266,7 @@ async def bug_fixer_p2(data:InterpreterData):
                     elif op == "divide":
                         if size != 2 or not checkType(args[0], int) or not checkType(args[1], int) or args[1] == 0 :
                             return error(i)
-                        res = args[0]
-                        if not checkType(res, int):
-                            return error(i)
-                        for num in args[1::]:
-                            if not checkType(num, int):
-                                return error(i)
-                            res /= symbols.get(num, num)
-                        stack.append(res)
+                        stack.append(symbols.get(args[0], args[0]) / symbols.get(args[1], args[1]))
                     elif op == "abs":
                         if size != 1 or not checkType(args[0], int):
                             return error(i)
