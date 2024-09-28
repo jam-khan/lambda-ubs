@@ -892,7 +892,7 @@ async def get_flags():
             "flag": "UB5{w3lc0m3_70_c7f_N0ttyB01}"
         },
         "openAiExploration": {
-            "flag": "sk-9a59bc85ebf02d5694d4b517143efba6"
+            "flag": "sk-49305a2a9dcc503cb2b1fdeef8a7ac04"
         },
         "dictionaryAttack": {
             "flag": "UB5{FLAG_CONTENT_HERE}",
