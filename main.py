@@ -629,6 +629,7 @@ class RequestData(BaseModel):
     dictionary: List[str]
     mistypes: List[str]
 
+    
 def find_correct_word(mistyped_word: str, dictionary: List[str]) -> str:
     for correct_word in dictionary:
         if len(correct_word) == len(mistyped_word):
@@ -639,7 +640,8 @@ def find_correct_word(mistyped_word: str, dictionary: List[str]) -> str:
     return None
 
 @app.post("/the-clumsy-programmer")
-async def correct_mistypes(data: RequestData):
+async def correct_mistypes(data: List[RequestData]):
+    data = data[0]
     print(data)
     corrections = []
     
@@ -647,4 +649,5 @@ async def correct_mistypes(data: RequestData):
     for mistyped in data.mistypes:
         corrected = find_correct_word(mistyped, dictionary)
         corrections.append(corrected)
+    
     return {"corrections": corrections}
