@@ -281,9 +281,9 @@ async def interp(data:InterpreterData):
                     elif op == "substring":
                         if size != 3 or not checkType(args[0], String) or not checkType(args[1], int) or not checkType(args[2], int) or args[1] < 0 or args[2] < 0:
                             return error(i) 
-                        s = (String(args[0]))
-                        l = (String(args[1]))
-                        r = (String(args[2]))
+                        s = ((args[0]).content)
+                        l = ((args[1]))
+                        r = ((args[2]))
                         if l < 0 or r < 0 or l >= len(s) or r > len(s) or l > r:
                             return error(i)
                         stack.append(s[l:r])
