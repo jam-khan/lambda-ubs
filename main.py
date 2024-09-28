@@ -707,9 +707,11 @@ async def mail_time(data: EmailData):
     res = defaultdict(int)
     count = defaultdict(int)
     work_hours = {}
+    time_zones = {}
 
     for user in users:
         work_hours[user.name] = [user.officeHours.start, user.officeHours.end]
+        time_zones[user.name] = user.officeHours.timeZone
 
     for email in emails:
         parts = email.subject.split('RE:')
@@ -742,7 +744,7 @@ async def mail_time(data: EmailData):
         for i in range(1,len(start_mail[subject])):
             cur, prev = start_mail[subject][i],start_mail[subject][i-1]
             dt1 = cur[-1]
-            dt2 = prev[-1].astimezone(dt1.tzinfo)
+            dt2 = prev[-1].astimezone(time_zones[cur[-1]])
             start,end = work_hours[cur[1]]
             time_difference = 0
             dt2 = convert_working(dt2, start)
