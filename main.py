@@ -376,7 +376,10 @@ async def interp(data:InterpreterData):
                         if size != 2 or not checkType(args[0], (int, float)) or not checkType(args[1], (int, float)) or float(args[1]) == 0:
                             return error(i)
                         
-                        result = (args[0]) / (args[1])  # Ensure both arguments are treated as floats
+                        if isinstance(args[0], int) and isinstance(args[1], int):
+                            result = args[0] // args[1]
+                        else:
+                            result = (args[0]) / (args[1])  # Ensure both arguments are treated as floats
                         stack.append(format_number(result))
                         
                     elif op == "abs":
