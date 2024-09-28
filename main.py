@@ -592,7 +592,7 @@ async def wordle_game(data : InputData):
                 elif prev_eval[i] == '?':
                     continue
         
-        possible_guess = set()
+        possible_guess = []
         for word in five_words_set:
             
             all_possible = True
@@ -609,8 +609,11 @@ async def wordle_game(data : InputData):
             if put_word:
                 possible_guess.add(word)
         
-        print(list(possible_guess))
-        return {"guess": list(possible_guess)[0]} 
+        final = possible_guess[0]
+        
+        return {
+            "guess": final
+            } 
             
             
             
