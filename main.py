@@ -574,81 +574,81 @@ async def dodge(request: Request):
     # return grid_tracker
     return {"instructions": dfs(row, col, [], 0)}
             
-class InputData(BaseModel):
-    guessHistory: List[str]
-    evaluationHistory: List[str]
+# class InputData(BaseModel):
+#     guessHistory: List[str]
+#     evaluationHistory: List[str]
 
-@app.post("/wordle-game")
-async def wordle_game(data : InputData):
+# @app.post("/wordle-game")
+# async def wordle_game(data : InputData):
     
     
     
-    # return {"x": reference_words}
-    five_words_set = set()
+#     # return {"x": reference_words}
+#     five_words_set = set()
     
-    with open('words.txt', 'r') as file:
-        for line in file:
-            # Split each line into words and add them to the set
-            for word in line.split():
-                five_words_set.add(word)
+#     with open('words.txt', 'r') as file:
+#         for line in file:
+#             # Split each line into words and add them to the set
+#             for word in line.split():
+#                 five_words_set.add(word)
     
-    # data = {
-    #     "guessHistory": ["slate", "lucky", "maser", "gapes", "wages"], 
-    #     "evaluationHistory": ["?-X-X", "-?---", "-O?O-", "XO-?O", "OOOOO"]
-    # }
+#     # data = {
+#     #     "guessHistory": ["slate", "lucky", "maser", "gapes", "wages"], 
+#     #     "evaluationHistory": ["?-X-X", "-?---", "-O?O-", "XO-?O", "OOOOO"]
+#     # }
     
-    guessHistory = data.guessHistory
-    evaluationHistory = data.evaluationHistory
+#     guessHistory = data.guessHistory
+#     evaluationHistory = data.evaluationHistory
     
-    if not guessHistory:
-        first_guess = random.choice(list(five_words_set))
-        return {"guess": first_guess}
+#     if not guessHistory:
+#         first_guess = random.choice(list(five_words_set))
+#         return {"guess": first_guess}
 
-    else:
+#     else:
         
-        guess = ['', '', '', '', '']
-        banned_letters = []
-        possible_letters = []
+#         guess = ['', '', '', '', '']
+#         banned_letters = []
+#         possible_letters = []
         
-        for i in range(len(evaluationHistory)):
-            prev_guess  = guessHistory[i]
-            prev_eval   = evaluationHistory[i]
+#         for i in range(len(evaluationHistory)):
+#             prev_guess  = guessHistory[i]
+#             prev_eval   = evaluationHistory[i]
             
-            for j in range(len(prev_eval)):
-                if prev_eval[j] == 'X':
-                    possible_letters.append(prev_guess[j])
-                elif prev_eval[j] == 'O':
-                    guess[j] = prev_guess[j]
-                    # possible_letters.append(prev_guess[i])
-                elif prev_eval[j] == '-':
-                    banned_letters.append(prev_guess[j])
-                elif prev_eval[j] == '?':
-                    continue
+#             for j in range(len(prev_eval)):
+#                 if prev_eval[j] == 'X':
+#                     possible_letters.append(prev_guess[j])
+#                 elif prev_eval[j] == 'O':
+#                     guess[j] = prev_guess[j]
+#                     # possible_letters.append(prev_guess[i])
+#                 elif prev_eval[j] == '-':
+#                     banned_letters.append(prev_guess[j])
+#                 elif prev_eval[j] == '?':
+#                     continue
         
-        possible_guess = []
-        for word in five_words_set:
+#         possible_guess = []
+#         for word in five_words_set:
             
-            all_possible = True
-            for w in possible_letters:
-                all_possible = all_possible and w in word
-            if not all_possible:
-                continue
+#             all_possible = True
+#             for w in possible_letters:
+#                 all_possible = all_possible and w in word
+#             if not all_possible:
+#                 continue
             
-            put_word = True
-            for i in range(len(word)):
-                put_word = put_word and not (word[i] in banned_letters)
-                put_word = put_word and not (guess[i] != '' and guess[i] != word[i])
+#             put_word = True
+#             for i in range(len(word)):
+#                 put_word = put_word and not (word[i] in banned_letters)
+#                 put_word = put_word and not (guess[i] != '' and guess[i] != word[i])
             
-            if put_word:
-                possible_guess.append(word)
+#             if put_word:
+#                 possible_guess.append(word)
         
         
-        print(possible_guess)
-        final = possible_guess[0]
+#         print(possible_guess)
+#         final = possible_guess[0]
         
-        return {
-            "guess": final
-            } 
+#         return {
+#             "guess": final
+#             } 
     
 class RequestData(BaseModel):
     dictionary: List[str]
