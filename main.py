@@ -173,7 +173,7 @@ async def bug_fixer_p2(data:InterpreterData):
         for i, line in enumerate(codes):
             index = 0
             stack = []  
-
+            print(codes)
             while index < len(line):
                 curr = line[index]
 
@@ -220,7 +220,6 @@ async def bug_fixer_p2(data:InterpreterData):
                         target = symbols.get(args[1], args[1])
                         replacement = symbols.get(args[2], args[2])
                         result = source.replace(target, replacement)
-                        print(source, target, replacement, result)
                         stack.append(result) 
                     elif op == "substring":
                         if size != 3 or not checkType(args[0], str) or not checkType(args[1], int) or not checkType(args[2], int) or args[1] < 0 or args[2] < 0:
