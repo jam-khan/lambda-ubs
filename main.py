@@ -125,7 +125,6 @@ async def bug_fixer_p2(data:List[BugFixerRequest]):
 @app.post("/bugfixer/p1")
 async def bug_fixer_p1(data : List[BugFixerRequest1]):
     res = []
-    print("hit")
     for input in data:
         time, pre = input.time, input.prerequisites
         adj_list = defaultdict(list)
@@ -161,35 +160,40 @@ async def bug_fixer_p1(data : List[BugFixerRequest1]):
         res.append(cur_res[0])
     return res
 
-@app.post("/digital-colony")
+@app.post("/digital_colony")
 async def digital_colony(data : List[DigitalColony]):
     res = []
     for input in data:
-        g, c = input.generations, input.colony
+        g, c = input.generations, str(input.colony)
         for i in range(g):
-            pairs = deque([])
+            pairs = deque()
             total = 0
             for j in range(len(c)):
                 total += int(c[j])
+
+            for j in range(len(c)):
                 if j == len(c)-1:
-                    continue
+                    break
                 cur,nex = int(c[j]),int(c[j+1])
                 if cur == nex:
-                    pairs.append('0')
-                elif cur == 1:
-                    pairs.append(str(10- abs(cur-nex))[-1])
+                    pairs.append(str(total)[-1])
+                elif nex>cur:
+                    pairs.append(str(10- abs(cur-nex)+total)[-1])
                 else:
-                    pairs.append(str(abs(cur-nex))[-1])
+                    pairs.append(str(abs(cur-nex)+total)[-1])
             new_c = ""
 
-            for i in range(len(c)):
-                if i == len(c)-1:
-                    continue
-                new_c+= c[i]
+            for k in range(len(c)):
+                new_c+= c[k]
+                if k == len(c)-1:
+                    break
                 pop = pairs.popleft()
                 new_c += pop
             c = new_c
-        res.append(c)
+        tot = 0
+        for char in c:
+            tot += int(char)
+        res.append(tot)
     return res
 
 
