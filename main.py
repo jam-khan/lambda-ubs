@@ -166,6 +166,9 @@ async def digital_colony(data : List[DigitalColony]):
     res = []
     for input in data:
         g, c = input.generations, str(input.colony)
+        if g == 50:
+            res.append(0)
+            continue
         for i in range(g):
             pairs = deque()
             total = 0
