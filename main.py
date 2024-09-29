@@ -221,13 +221,12 @@ def getDigitalColony(data):
         weights.append(str(total_weight))
     return weights
 
-@app.route('/digital-colony', methods=['GET', 'POST'])
+@app.post('/digital-colony')
 def digital_colony(data: List[DigitalColony] ):
     res = getDigitalColony(data)
     return res
 
 
-                
 @app.post("/lisp-parser")
 async def interp(data:InterpreterData):
     class String:
