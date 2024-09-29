@@ -171,73 +171,61 @@ async def bug_fixer_p1(data : List[BugFixerRequest1]):
         res.append(cur_res[0])
     return res
 
-@app.post("/digital-colony")
-async def digital_colony(dataList : List[DigitalColony]):
-    res = []
+def getDigitalColony(data):
+    weights = []
 
-    # def f(n, colony_size):
-    #     if n == 0:
-    #         return colony_size
-    
-    #     return 2 * f(n - 1, colony_size) - 1
-    
-    for data in dataList:
-        colony, generations = data.colony,data.generations
+    def countSignature(a, b):
+        diff = abs(a - b)
+        return diff if a >= b else 10 - diff
 
-        total = 0
-        pairs = []
-
-        for i in range(len(colony)):
-            total += int(colony[i])
-            if i != len(colony) -1:
-                pairs.append((int(colony[i]), int(colony[i+1])))
-                
-        for g in range(generations):
-            new_pairs = []
-            new_add = 0
-
-            for cur,nex in pairs:
-                cur_res = None
-                if cur == nex:
-                    cur_res = total %10
-                elif cur < nex:
-                    cur_res = (total + 10 - (nex-cur)) %10
-                else:
-                    cur_res = (total + cur-nex) % 10
-                new_add += cur_res
-                new_pairs.append((cur,cur_res))
-                new_pairs.append((cur_res,nex))
-            total+=new_add
-            pairs = new_pairs
-        res.append(total)
-
-        # dp_size = f(generations,len(colony))
-        # dp = [0] * dp_size
-        # total = 0
-        # gap = dp_size//(len(colony)-1)
-
-        # for i in range(len(colony)):
-        #     dp[i*gap] = int(colony[i])
-        #     total += int(colony[i])
+    for item in data:
+        generations = item['generations']
+        colony_str = item['colony']
+        # digit & pair counts
+        counts_d = [0] * 10 
+        counts_p = [[0] * 10 for _ in range(10)] 
         
-        # gap_h = gap // 2
+        # init count for 1st colony
+        digits = [int(d) for d in colony_str]
+        for d in digits:
+            counts_d[d] += 1
+        for i in range(len(digits) - 1):
+            a, b = digits[i], digits[i + 1]
+            counts_p[a][b] += 1
         
-        # for g in range(generations):
-        #     i = 0
-        #     while gap != 0:
-        #         cur = dp[i]
-        #         nex = dp[i+gap]
-        #         if cur == nex:
-        #             dp[i+gap_h] = total %10
-        #         elif cur < nex:
-        #             dp[i+gap_h] = (total + 10 - abs(cur-nex)) %10
-        #         else:
-        #             dp[i+gap_h] = (total + abs(cur-nex)) % 10
-        #         total += dp[i+gap_h]
-        #         i+=gap
-        #         gap//=2
+        total_weight = sum(d * counts_d[d] for d in range(10))
+        
+        for _ in range(generations):
+            counts_new_d = [0] * 10 
+            for a in range(10):
+                for b in range(10):
+                    c = counts_p[a][b]
+                    if c > 0:
+                        signature = countSignature(a, b)
+                        new_digit = (total_weight + signature) % 10
+                        counts_new_d[new_digit] += c
+            # digit counts
+            for d in range(10):
+                counts_d[d] += counts_new_d[d]
+            total_weight += sum(d * counts_new_d[d] for d in range(10))
+            counts_p_new = [[0] * 10 for _ in range(10)]
+            for a in range(10):
+                for b in range(10):
+                    c = counts_p[a][b]
+                    if c > 0:
+                        signature = countSignature(a, b)
+                        new_digit = (total_weight - sum(d * counts_new_d[d] for d in range(10)) + signature) % 10
+                        counts_p_new[a][new_digit] += c
+                        counts_p_new[new_digit][b] += c
+            counts_p = counts_p_new
+        weights.append(str(total_weight))
+    return weights
 
+@app.route('/digital-colony', methods=['GET', 'POST'])
+def digital_colony(data: List[DigitalColony] ):
+    res = getDigitalColony(data)
     return res
+
 
                 
 @app.post("/lisp-parser")
