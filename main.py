@@ -179,8 +179,8 @@ def getDigitalColony(data):
         return diff if a >= b else 10 - diff
 
     for item in data:
-        generations = item['generations']
-        colony_str = item['colony']
+        generations = item.generations
+        colony_str = item.colony
         # digit & pair counts
         counts_d = [0] * 10 
         counts_p = [[0] * 10 for _ in range(10)] 
