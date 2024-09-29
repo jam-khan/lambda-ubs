@@ -171,22 +171,18 @@ async def bug_fixer_p1(data : List[BugFixerRequest1]):
         res.append(cur_res[0])
     return res
 
-def getDigitalColony(data):
+@app.post('/digital-colony')
+def digital_colony(data: List[DigitalColony] ):
+    
     weights = []
-
-    def countSignature(a, b):
-        diff = abs(a - b)
-        return diff if a >= b else 10 - diff
 
     for item in data:
         generations = item.generations
-        colony_str = item.colony
-        # digit & pair counts
+        colony = item.colony
         counts_d = [0] * 10 
         counts_p = [[0] * 10 for _ in range(10)] 
         
-        # init count for 1st colony
-        digits = [int(d) for d in colony_str]
+        digits = [int(d) for d in colony]
         for d in digits:
             counts_d[d] += 1
         for i in range(len(digits) - 1):
@@ -195,16 +191,16 @@ def getDigitalColony(data):
         
         total_weight = sum(d * counts_d[d] for d in range(10))
         
-        for _ in range(generations):
+        for generation in range(generations):
             counts_new_d = [0] * 10 
             for a in range(10):
                 for b in range(10):
                     c = counts_p[a][b]
                     if c > 0:
-                        signature = countSignature(a, b)
+                        diff = abs(a - b)
+                        signature = diff if a >= b else 10 - diff
                         new_digit = (total_weight + signature) % 10
                         counts_new_d[new_digit] += c
-            # digit counts
             for d in range(10):
                 counts_d[d] += counts_new_d[d]
             total_weight += sum(d * counts_new_d[d] for d in range(10))
@@ -213,18 +209,14 @@ def getDigitalColony(data):
                 for b in range(10):
                     c = counts_p[a][b]
                     if c > 0:
-                        signature = countSignature(a, b)
+                        diff = abs(a - b)
+                        signature = diff if a >= b else 10 - diff
                         new_digit = (total_weight - sum(d * counts_new_d[d] for d in range(10)) + signature) % 10
                         counts_p_new[a][new_digit] += c
                         counts_p_new[new_digit][b] += c
             counts_p = counts_p_new
         weights.append(str(total_weight))
     return weights
-
-@app.post('/digital-colony')
-def digital_colony(data: List[DigitalColony] ):
-    res = getDigitalColony(data)
-    return res
 
 
 @app.post("/lisp-parser")
