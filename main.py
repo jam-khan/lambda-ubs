@@ -179,43 +179,43 @@ def digital_colony(data: List[DigitalColony] ):
     for item in data:
         generations = item.generations
         colony = item.colony
-        counts_d = [0] * 10 
-        counts_p = [[0] * 10 for _ in range(10)] 
+        cd = [0] * 10 
+        cp = [[0] * 10 for _ in range(10)] 
         
         digits = [int(d) for d in colony]
         for d in digits:
-            counts_d[d] += 1
+            cd[d] += 1
         for i in range(len(digits) - 1):
             a, b = digits[i], digits[i + 1]
-            counts_p[a][b] += 1
+            cp[a][b] += 1
         
-        total_weight = sum(d * counts_d[d] for d in range(10))
+        tw = sum(d * cd[d] for d in range(10))
         
         for generation in range(generations):
-            counts_new_d = [0] * 10 
+            cdn = [0] * 10 
             for a in range(10):
                 for b in range(10):
-                    c = counts_p[a][b]
+                    c = cp[a][b]
                     if c > 0:
                         diff = abs(a - b)
                         signature = diff if a >= b else 10 - diff
-                        new_digit = (total_weight + signature) % 10
-                        counts_new_d[new_digit] += c
+                        new_digit = (tw + signature) % 10
+                        cdn[new_digit] += c
             for d in range(10):
-                counts_d[d] += counts_new_d[d]
-            total_weight += sum(d * counts_new_d[d] for d in range(10))
-            counts_p_new = [[0] * 10 for _ in range(10)]
+                cd[d] += cdn[d]
+            tw += sum(d * cdn[d] for d in range(10))
+            cpn = [[0] * 10 for _ in range(10)]
             for a in range(10):
                 for b in range(10):
-                    c = counts_p[a][b]
+                    c = cp[a][b]
                     if c > 0:
                         diff = abs(a - b)
                         signature = diff if a >= b else 10 - diff
-                        new_digit = (total_weight - sum(d * counts_new_d[d] for d in range(10)) + signature) % 10
-                        counts_p_new[a][new_digit] += c
-                        counts_p_new[new_digit][b] += c
-            counts_p = counts_p_new
-        weights.append(str(total_weight))
+                        new_digit = (tw - sum(d * cdn[d] for d in range(10)) + signature) % 10
+                        cpn[a][new_digit] += c
+                        cpn[new_digit][b] += c
+            cp = cpn
+        weights.append(str(tw))
     return weights
 
 
